@@ -21,10 +21,11 @@ def func_1a(x: np.ndarray) -> float:
 
     """ Start of your code
     """
-
+    x1 , x2 = x[0], x[1]
+    f = 2*x1*x1*x1 - 6*x2*x2 + 3*x1*x1*x2    
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_1a(x: np.ndarray) -> np.ndarray:
@@ -34,10 +35,12 @@ def grad_1a(x: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    partial_x1 = 6*x1*x1 + 6*x1*x2
+    partial_x2 = -12*x2 + 3*x1*x1
     """ End of your code
     """
-    return np.zeros(2)
+    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
 
 
 def func_1b(x: np.ndarray) -> float:
@@ -47,10 +50,11 @@ def func_1b(x: np.ndarray) -> float:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    f =  x1*x1 + (x1 + 1)*(x1*x1 + x2*x2)
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_1b(x: np.ndarray) -> np.ndarray:
@@ -60,10 +64,12 @@ def grad_1b(x: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    partial_x1 = 4*x1 + x2*x2 + 3*x1*x1
+    partial_x2 = 2*x2*(x1 + 2)
     """ End of your code
     """
-    return np.zeros(2)
+    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
 
 
 def func_1c(x: np.ndarray) -> float:
@@ -73,10 +79,11 @@ def func_1c(x: np.ndarray) -> float:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    f = np.log(1 + 0.5 * (x1*x1 + 3*x2*x2*x2))
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_1c(x: np.ndarray) -> np.ndarray:
@@ -86,10 +93,12 @@ def grad_1c(x: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    partial_x1 = (2*x1)/(2 + x1*x1 + 3*x2*x2*x2) 
+    partial_x2 = (9*x2*x2)/(2 + x1*x1+3*x2*x2*x2)
     """ End of your code
     """
-    return np.zeros(2)
+    return np.ndarray(shape=(2,0), buffer=[partial_x1, partial_x2])
 
 
 def func_1d(x: np.ndarray) -> float:
@@ -99,10 +108,11 @@ def func_1d(x: np.ndarray) -> float:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    f = (x1-2)*(x1-2) + x1*x2*x2 - 2
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_1d(x: np.ndarray) -> np.ndarray:
@@ -112,10 +122,12 @@ def grad_1d(x: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    x1, x2 = x[0], x[1]
+    partial_x1 = 2*(x1-2) + x2*x2
+    partial_x2 = 2*x1*x2
     """ End of your code
     """
-    return np.zeros(2)
+    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
 
 
 def task1():
@@ -204,10 +216,14 @@ def func_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
-
+    AB = A @ B
+    v = np.dot(AB, x)
+    v = v - b
+    norm = np.linalg.norm(v)
+    f = 0.5*norm*norm
     """ End of your code
     """
-    return np.zeros(1)
+    return np.ndarray([f])
 
 
 def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.ndarray:
