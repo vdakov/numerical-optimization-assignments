@@ -192,14 +192,27 @@ def task2():
 
         """ Start of your code
         """
+        x1, x2 = x
+
+        approx_grad_x1 = (func(x1 + eps, x2) - func(x1 - eps, x2)) / (2 * eps)
+        approx_grad_x2 = (func(x1, x2 + eps) - func(x1, x2 - eps)) / (2 * eps)
 
         """ End of your code
         """
 
-        return np.zeros(2)
+        return [approx_grad_x1, approx_grad_x2]
 
     """ Start of your code
     """
+    eps = np.finfo(float).eps # machine epsilon - as low as possible
+    num_steps = 1000000  
+    random_points = np.linspace(-1e308, 1e308, num_steps) #meant to simulate the set R
+    random_indices = np.random.choice(len(random_points), 6, replace=False) #
+    x1_samples = [random_points[i] for i in random_indices[:3]]
+    x2_samples = [random_points[i] for i in random_indices[3:]]
+    
+    assert len(x1_samples) == len(x2_samples)
+
 
     """ End of your code
     """
