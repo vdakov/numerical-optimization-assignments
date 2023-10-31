@@ -38,9 +38,11 @@ def grad_1a(x: np.ndarray) -> np.ndarray:
     x1, x2 = x[0], x[1]
     partial_x1 = 6*x1*x1 + 6*x1*x2
     partial_x2 = -12*x2 + 3*x1*x1
+
     """ End of your code
     """
-    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
+    # return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
+    return np.array([partial_x1, partial_x2])
 
 
 def func_1b(x: np.ndarray) -> float:
@@ -69,7 +71,7 @@ def grad_1b(x: np.ndarray) -> np.ndarray:
     partial_x2 = 2*x2*(x1 + 2)
     """ End of your code
     """
-    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
+    return np.array([partial_x1, partial_x2])
 
 
 def func_1c(x: np.ndarray) -> float:
@@ -98,7 +100,7 @@ def grad_1c(x: np.ndarray) -> np.ndarray:
     partial_x2 = (9*x2*x2)/(2 + x1*x1+3*x2*x2*x2)
     """ End of your code
     """
-    return np.ndarray(shape=(2,0), buffer=[partial_x1, partial_x2])
+    return np.array([partial_x1, partial_x2])
 
 
 def func_1d(x: np.ndarray) -> float:
@@ -127,7 +129,7 @@ def grad_1d(x: np.ndarray) -> np.ndarray:
     partial_x2 = 2*x1*x2
     """ End of your code
     """
-    return np.ndarray(shape=(2,), buffer=[partial_x1, partial_x2])
+    return np.array([partial_x1, partial_x2])
 
 
 def task1():
@@ -194,8 +196,8 @@ def task2():
         """
         x1, x2 = x
 
-        approx_grad_x1 = (func(x1 + eps, x2) - func(x1 - eps, x2)) / (2 * eps)
-        approx_grad_x2 = (func(x1, x2 + eps) - func(x1, x2 - eps)) / (2 * eps)
+        approx_grad_x1 = (func([x1 + eps, x2]) - func([x1 - eps, x2])) / (2 * eps)
+        approx_grad_x2 = (func([x1, x2 + eps]) - func([x1, x2 - eps])) / (2 * eps)
 
         """ End of your code
         """
@@ -204,15 +206,40 @@ def task2():
 
     """ Start of your code
     """
-    eps = np.finfo(float).eps # machine epsilon - as low as possible
-    num_steps = 1000000  
-    random_points = np.linspace(-1e308, 1e308, num_steps) #meant to simulate the set R
+    eps =  1e-03
+    num_steps = 100000
+    random_points = np.linspace(0, 10000, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
+    
     x1_samples = [random_points[i] for i in random_indices[:3]]
     x2_samples = [random_points[i] for i in random_indices[3:]]
+
+    points = [[x1, x2] for x1, x2 in zip(x1_samples, x2_samples)]
     
     assert len(x1_samples) == len(x2_samples)
 
+    approximations_list = []
+
+    for point in points:
+        
+
+        approx_g_a = approx_grad_task1(func_1a, point, eps)
+        approx_g_b = approx_grad_task1(func_1b, point, eps)
+        approx_g_c = approx_grad_task1(func_1c, point, eps)
+        approx_g_d = approx_grad_task1(func_1d, point, eps)
+
+        g_a = grad_1a(point)
+        g_b = grad_1b(point)
+        g_c = grad_1c(point)
+        g_d = grad_1d(point)
+
+        approximations_list.append([g_a, approx_g_a])
+        approximations_list.append([g_b, approx_g_b])
+        approximations_list.append([g_c, approx_g_c])
+        approximations_list.append([g_d, approx_g_d])
+    
+    for gradient, approximation in approximations_list:
+        assert np.allclose(gradient, approximation, rtol=eps*(1e03), atol=eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
 
     """ End of your code
     """
