@@ -208,7 +208,7 @@ def task2():
     """
     eps =  1e-03
     num_steps = 100000
-    random_points = np.linspace(0, 10000, num_steps) #meant to simulate the set R has to be positive because of log
+    random_points = np.linspace(0, 10, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
     
     x1_samples = [random_points[i] for i in random_indices[:3]]
@@ -217,12 +217,13 @@ def task2():
     points = [[x1, x2] for x1, x2 in zip(x1_samples, x2_samples)]
     
     assert len(x1_samples) == len(x2_samples)
+    print('Points: {}'.format(points))
+    print('========================')
 
     approximations_list = []
 
     for point in points:
-        
-
+        print('Point: {}\n'.format(point))
         approx_g_a = approx_grad_task1(func_1a, point, eps)
         approx_g_b = approx_grad_task1(func_1b, point, eps)
         approx_g_c = approx_grad_task1(func_1c, point, eps)
@@ -233,17 +234,24 @@ def task2():
         g_c = grad_1c(point)
         g_d = grad_1d(point)
 
+        print('Gradient - Approximation')
+        print('a) {} - {}'.format(g_a, approx_g_a))
+        print('b) {} - {}'.format(g_b, approx_g_b))
+        print('c) {} - {}'.format(g_c, approx_g_c))
+        print('d) {} - {}'.format(g_d, approx_g_d))
+
         approximations_list.append([g_a, approx_g_a])
         approximations_list.append([g_b, approx_g_b])
         approximations_list.append([g_c, approx_g_c])
         approximations_list.append([g_d, approx_g_d])
+
+        print('========================')
     
     for gradient, approximation in approximations_list:
         assert np.allclose(gradient, approximation, rtol=eps*(1e03), atol=eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
-
+    
     """ End of your code
     """
-
 
 # Modify the function bodies below to be used for function value and gradient computation
 def func_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -437,6 +445,27 @@ def task4():
     """ Start of your code
     """
 
+    costs_1_s =  [0.5, 0.25, 0.25, 0.25, 1.0, 1.0, 0.5, 0.5, 1.0, 0.5, 1.5, 2.5, 1.0, 2.5, 3.5, 9.0]
+    costs_2_s = [0.75, 1.0, 0.75, 0.5, 0.5, 0.25, 0.25, 0.25, 2.0, 1.25, 1.0, 4.0, 2.5, 3.0, 2.0, 6.0]
+    c_s = [0.5, 0.25, 0.25, 0.25, 1.0, 1.0, 0.5, 0.5, 1.0, 0.5, 1.5, 2.5, 1.0, 2.5, 3.5, 0.0,
+     0.75, 1.0, 0.75, 0.5, 0.5, 0.25, 0.25, 0.25, 2.0, 1.25, 1.0, 4.0, 2.5, 3.0, 2.0, 0.0]
+    A_eq_s = [np.append(costs_1_s, np.zeros(16)), np.append(np.zeros(16), costs_2_s)]
+    for i in range(15):
+        arr = np.zeros(32)
+        arr[i] = 1
+        arr[i + 16] = 1
+        A_eq_s.append(arr)
+    b_eq_s = [9, 6] + [1] * 15
+
+
+    A_eq_s = np.array(A_eq_s)
+
+    bounds_s = [(0, 1) for _ in range(32)]
+    bounds_s[15]=(0, 1e20)
+    bounds_s[31]=(0, 1e20)
+
+    sol_s = opt.linprog(c_s, A_eq=A_eq_s, b_eq=b_eq_s, bounds=bounds_s)['x']
+    print('Minimum total time spent: {} h'.format(sol_s)) #final answer
     """ End of your code
     """
 
