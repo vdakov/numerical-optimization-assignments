@@ -164,7 +164,21 @@ def task1():
 
     """ Start of your code
     """
+    x1, x2 = np.meshgrid(np.linspace(-8, 8, 100), np.linspace(-8,8,100))
+    cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=150)
+    ax[0].clabel(cs, inline=1, fontsize=10)
 
+    x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-2,2,100))
+    cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=150)
+    ax[1].clabel(cs, inline=1, fontsize=10)
+
+    x1, x2 = np.meshgrid(np.linspace(-0.5, 4, 100), np.linspace(-0.5,4,100))
+    cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=150)
+    ax[2].clabel(cs, inline=1, fontsize=10)
+
+    x1, x2 = np.meshgrid(np.linspace(-4, 4, 100), np.linspace(-4,4,100))
+    cs = ax[3].contour(x1,x2,func_1d([x1,x2]),levels=150)
+    ax[3].clabel(cs, inline=1, fontsize=10)
     """ End of your code
     """
     return fig
