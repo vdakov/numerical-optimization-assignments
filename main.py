@@ -164,21 +164,31 @@ def task1():
 
     """ Start of your code
     """
-    x1, x2 = np.meshgrid(np.linspace(-8, 8, 100), np.linspace(-8,8,100))
-    cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=150)
+    x1, x2 = np.meshgrid(np.linspace(-6, 2, 100), np.linspace(-2,6,100))
+    cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=125)
     ax[0].clabel(cs, inline=1, fontsize=10)
+    ax[0].plot(0,0,'*',label='point')
+    ax[0].plot(-4,4,'*',label='point')
 
-    x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-2,2,100))
-    cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=150)
+    x1, x2 = np.meshgrid(np.linspace(-2, 1, 200), np.linspace(-2,2,100))
+    cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=200)
     ax[1].clabel(cs, inline=1, fontsize=10)
+    ax[1].plot(-1.5,0,'*',label='point')
+    ax[1].plot(-1,1,'*',label='point')
+    ax[1].plot(-1,-1,'*',label='point')
+    ax[1].plot(0,0,'*',label='point')
 
-    x1, x2 = np.meshgrid(np.linspace(-0.5, 4, 100), np.linspace(-0.5,4,100))
-    cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=150)
+    x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-0.5,4,100))
+    cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=100)
     ax[2].clabel(cs, inline=1, fontsize=10)
+    ax[2].plot(0,0,'*',label='point')
 
     x1, x2 = np.meshgrid(np.linspace(-4, 4, 100), np.linspace(-4,4,100))
-    cs = ax[3].contour(x1,x2,func_1d([x1,x2]),levels=150)
+    cs = ax[3].contour(x1,x2,func_1d([x1,x2]),levels=125)
     ax[3].clabel(cs, inline=1, fontsize=10)
+    ax[3].plot(2,0,'*',label='point')
+    ax[3].plot(0,2,'*',label='point')
+    ax[3].plot(0,-2,'*',label='point')
     """ End of your code
     """
     return fig
