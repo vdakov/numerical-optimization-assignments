@@ -289,13 +289,13 @@ def func_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
     """ Start of your code
     """
     AB = A @ B
-    v = np.dot(AB, x)
+    v = AB @ x
     v = v - b
     norm = np.linalg.norm(v)
     f = 0.5*norm*norm
     """ End of your code
     """
-    return np.ndarray([f])
+    return np.array([f])
 
 
 def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -308,13 +308,17 @@ def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
-
+    AB = A@B
+    ABT = AB.T
+    v = AB @ x
+    v = v - b
+    grad = ABT @ v
     """ End of your code
     """
-    return np.zeros_like(x)
+    return grad
 
 
-def hessian_3a(x):
+def hessian_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray):
     """Computes and returns the Hessian value for function 3a) at a given point x
     @param x Vector of size (n,)
     @param A Matrix of size (m,o)
@@ -324,10 +328,12 @@ def hessian_3a(x):
 
     """ Start of your code
     """
-
+    AB = A@B
+    ABT = AB.T
+    hess = ABT @ AB
     """ End of your code
     """
-    return np.zeros((x.shape[0], x.shape[0]))
+    return hess
 
 
 def func_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
@@ -339,10 +345,14 @@ def func_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    ones = np.ones(x.size)
+    x1 = ones @ x
+    xt = x*t
+    xtt = xt.T
+    f = x1 - 0.5*(xtt @ (K @ xt))
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
@@ -354,10 +364,14 @@ def grad_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    ones = np.ones(x.size)
+    xt = x*t
+    Kxt = K @ xt
+    tKxt = t*Kxt
+    grad = ones - tKxt
     """ End of your code
     """
-    return np.zeros_like(x)
+    return grad
 
 
 def hessian_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
@@ -369,10 +383,12 @@ def hessian_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-
+    T = np.outer(t, t)
+    KT = K*T
+    hessian = -KT
     """ End of your code
     """
-    return np.zeros((x.shape[0], x.shape[0]))
+    return hessian
 
 
 def func_3c(
@@ -388,10 +404,14 @@ def func_3c(
 
     """ Start of your code
     """
-
+    ay = alpha*y
+    xay = x - ay
+    Axay = A*xay
+    Axay = Axay - b
+    f = 0.5*np.linalg.norm(Axay)
     """ End of your code
     """
-    return np.zeros(1)
+    return f
 
 
 def grad_3c(
@@ -407,10 +427,16 @@ def grad_3c(
 
     """ Start of your code
     """
-
+    ay = alpha*y
+    xay = x - ay
+    Axay = A*xay
+    Axay = Axay - b
+    Axay = Axay.T
+    Ay = A@y
+    grad = Axay @ Ay
     """ End of your code
     """
-    return np.zeros_like(x)
+    return grad
 
 
 def hessian_3c(
@@ -426,10 +452,11 @@ def hessian_3c(
 
     """ Start of your code
     """
+    Ay = A @ y
 
     """ End of your code
     """
-    return np.zeros((x.shape[0], x.shape[0]))
+    return np.array(np.linalg.norm(Ay))
 
 
 def task3():
@@ -453,6 +480,24 @@ def task3():
 
     """ Start of your code
     """
+    x1 = x
+    x2 = np.array([[0.9],[-1]])
+    x3 = np.array([[2], [0.1]])
+
+    approx_grad11 = opt.approx_fprime(np.array([0.5,0.75]), func_3a,0.00001,A,B,b)
+    approx_grad12 = opt.approx_fprime(np.array([0.9, -1]), func_3a,0.00001,A,B,b)
+    approx_grad13 = opt.approx_fprime(np.array([2,0.1]), func_3a, 0.00001,A,B,b)
+#
+
+
+    print("Approx comparing: ")
+    print("=======================")
+
+    print("1.")
+    print(x1, " True:", grad_3a(x1,A,B,b)," Approx", approx_grad11)
+    print(x2, "True: ", grad_3a(x2,A,B,b), " Approx", approx_grad12)
+    print(x3, " True: ", grad_3a(x3,A,B,b), " Approx", approx_grad13)
+    print("=======================")
 
     """ End of your code
     """
@@ -489,7 +534,7 @@ def task4():
     bounds_s[31]=(0, 1e20)
 
     sol_s = opt.linprog(c_s, A_eq=A_eq_s, b_eq=b_eq_s, bounds=bounds_s)['x']
-    print('Minimum total time spent: {} h'.format(sol_s)) #final answer
+    print('Minimum total time spent: {} hours'.format(sol_s)) #final answer
     """ End of your code
     """
 
@@ -497,8 +542,9 @@ def task4():
 if __name__ == "__main__":
     pdf = PdfPages("figures.pdf")
 
-    tasks = [task1, task2, task3, task4]
+    #tasks = [task1, task2, task3, task4]
 
+    tasks = [task3]
     for t in tasks:
         fig = t()
 
