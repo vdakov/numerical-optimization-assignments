@@ -167,30 +167,32 @@ def task1():
     x1, x2 = np.meshgrid(np.linspace(-6, 2, 100), np.linspace(-2,6,100))
     cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=125)
     ax[0].clabel(cs, inline=1, fontsize=10)
-    ax[0].plot(0,0,'*',label='point')
-    ax[0].plot(-4,4,'*',label='point')
+    ax[0].plot(0,0,'*',label='inconclusive')
+    ax[0].plot(-4,4,'*',label='saddle point')
 
     x1, x2 = np.meshgrid(np.linspace(-2, 1, 200), np.linspace(-2,2,100))
     cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=200)
     ax[1].clabel(cs, inline=1, fontsize=10)
-    ax[1].plot(-1.5,0,'*',label='point')
-    ax[1].plot(-1,1,'*',label='point')
-    ax[1].plot(-1,-1,'*',label='point')
-    ax[1].plot(0,0,'*',label='point')
+    ax[1].plot(-4.0/3.0, 0, '*',label='saddle point')
+    ax[1].plot(-1,1,'*',label='saddle point')
+    ax[1].plot(-1,-1,'*',label='saddle point')
+    ax[1].plot(0,0,'*',label='local minimum')
 
     x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-0.5,4,100))
     cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=100)
     ax[2].clabel(cs, inline=1, fontsize=10)
-    ax[2].plot(0,0,'*',label='point')
+    ax[2].plot(0,0,'*',label='inconclusive')
 
     x1, x2 = np.meshgrid(np.linspace(-4, 4, 100), np.linspace(-4,4,100))
     cs = ax[3].contour(x1,x2,func_1d([x1,x2]),levels=125)
     ax[3].clabel(cs, inline=1, fontsize=10)
-    ax[3].plot(2,0,'*',label='point')
-    ax[3].plot(0,2,'*',label='point')
-    ax[3].plot(0,-2,'*',label='point')
+    ax[3].plot(2,0,'*',label='local minimum')
+    ax[3].plot(0,2,'*',label='saddle point')
+    ax[3].plot(0,-2,'*',label='saddle point')
     """ End of your code
     """
+    for a in ax:
+        a.legend()
     return fig
 
 
@@ -230,7 +232,7 @@ def task2():
 
     """ Start of your code
     """
-    eps =  1e-06
+    eps =  1e-03
     num_steps = 100000
     random_points = np.linspace(0, 10, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
@@ -566,7 +568,8 @@ def task4():
     bounds_s[31]=(0, 1e20)
 
     sol_s = opt.linprog(c_s, A_eq=A_eq_s, b_eq=b_eq_s, bounds=bounds_s)['x']
-    print('Minimum total time spent: {} hours'.format(sol_s)) #final answer
+    out = np.sum(sol_s@c_s)
+    print('Minimum total time spent: {} hours'.format(out)) #final answer
     """ End of your code
     """
 
@@ -574,9 +577,9 @@ def task4():
 if __name__ == "__main__":
     pdf = PdfPages("figures.pdf")
 
-    #tasks = [task1, task2, task3, task4]
+    tasks = [task1, task2, task3, task4]
 
-    tasks = [task3]
+    # tasks = [task3]
     for t in tasks:
         fig = t()
 
