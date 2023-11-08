@@ -230,7 +230,7 @@ def task2():
 
     """ Start of your code
     """
-    eps =  1e-03
+    eps =  1e-06
     num_steps = 100000
     random_points = np.linspace(0, 10, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
@@ -243,7 +243,7 @@ def task2():
     assert len(x1_samples) == len(x2_samples)
     print('Points: {}'.format(points))
     print('========================')
-
+    
     approximations_list = []
 
     for point in points:
@@ -272,7 +272,7 @@ def task2():
         print('========================')
     
     for gradient, approximation in approximations_list:
-        assert np.allclose(gradient, approximation, rtol=eps*(1e03), atol=eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+        assert np.allclose(gradient, approximation, rtol = eps * 1e03, atol = eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
     
     """ End of your code
     """
@@ -288,14 +288,19 @@ def func_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
+    b = np.ndarray.flatten(b)
+
     AB = A @ B
     v = AB @ x
     v = v - b
     norm = np.linalg.norm(v)
-    f = 0.5*norm*norm
+    f = 0.5*np.square(norm)
+    out = np.array([f])
+    
     """ End of your code
     """
-    return np.array([f])
+
+    return out
 
 
 def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -308,11 +313,14 @@ def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
-    AB = A@B
+    b = np.ndarray.flatten(b)
+
+    AB = A @ B
     ABT = AB.T
     v = AB @ x
     v = v - b
     grad = ABT @ v
+    
     """ End of your code
     """
     return grad
@@ -345,6 +353,7 @@ def func_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
+    t = np.ndarray.flatten(t)
     ones = np.ones(x.size)
     x1 = ones @ x
     xt = x*t
@@ -364,6 +373,8 @@ def grad_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
+    t = np.ndarray.flatten(t)
+
     ones = np.ones(x.size)
     xt = x*t
     Kxt = K @ xt
@@ -404,11 +415,15 @@ def func_3c(
 
     """ Start of your code
     """
+    x = np.ndarray.flatten(x)
+    y = np.ndarray.flatten(y)
+    b = np.ndarray.flatten(b)
+
     ay = alpha*y
     xay = x - ay
-    Axay = A*xay
+    Axay = A @ xay
     Axay = Axay - b
-    f = 0.5*np.linalg.norm(Axay)
+    f = 0.5*np.square(np.linalg.norm(Axay))
     """ End of your code
     """
     return f
@@ -427,13 +442,19 @@ def grad_3c(
 
     """ Start of your code
     """
+    x = np.ndarray.flatten(x)
+    y = np.ndarray.flatten(y)
+    b = np.ndarray.flatten(b)
+    
+
     ay = alpha*y
+    
     xay = x - ay
-    Axay = A*xay
+    Axay = A @ xay
     Axay = Axay - b
     Axay = Axay.T
     Ay = A@y
-    grad = Axay @ Ay
+    grad = - Axay @ Ay
     """ End of your code
     """
     return grad
@@ -480,24 +501,35 @@ def task3():
 
     """ Start of your code
     """
-    x1 = x
-    x2 = np.array([[0.9],[-1]])
-    x3 = np.array([[2], [0.1]])
 
-    approx_grad11 = opt.approx_fprime(np.array([0.5,0.75]), func_3a,0.00001,A,B,b)
-    approx_grad12 = opt.approx_fprime(np.array([0.9, -1]), func_3a,0.00001,A,B,b)
-    approx_grad13 = opt.approx_fprime(np.array([2,0.1]), func_3a, 0.00001,A,B,b)
-#
+    approximation_list = []
+    
+    for i in range(3):
+        x1_random = np.random.rand(2,) * 10
+        x2_random = np.random.rand(2,) * 10
+        alpha_random = np.random.rand(1,) * 10
 
 
-    print("Approx comparing: ")
-    print("=======================")
+        approx_grad_a = opt.approx_fprime(x1_random, func_3a, 1E-6, A, B, b)
+        approx_grad_b = opt.approx_fprime(x2_random, func_3b, 1E-6, K, t)
+        approx_grad_c = opt.approx_fprime(alpha_random, func_3c, 1E-6, A, x, y, b)
+        grad_3a_true = grad_3a(x1_random,A,B,b)
+        grad_3b_true = grad_3b(x2_random,K,t)
+        grad_3c_true = grad_3c(alpha_random, A, x, y, b)
 
-    print("1.")
-    print(x1, " True:", grad_3a(x1,A,B,b)," Approx", approx_grad11)
-    print(x2, "True: ", grad_3a(x2,A,B,b), " Approx", approx_grad12)
-    print(x3, " True: ", grad_3a(x3,A,B,b), " Approx", approx_grad13)
-    print("=======================")
+        approximation_list.append([grad_3a_true, approx_grad_a, x1_random])
+        approximation_list.append([grad_3b_true, approx_grad_b, x2_random])
+        approximation_list.append([grad_3c_true, approx_grad_c, alpha_random])
+
+        # print("\nApproximation {}:".format(i + 1))
+        # print("a) x =", x1_random, '\nTrue Gradient:', grad_3a_true, '\nApproximation:', approx_grad_a)
+        # print("b) x =", x2_random, '\nTrue Gradient:', grad_3b_true, '\nApproximation:', approx_grad_b)
+        # print("c) alpha = ", alpha_random, '\nTrue Gradient:', grad_3c_true , '\nApproximation:', approx_grad_c)
+
+        
+    for gradient, approximation, point in approximation_list:
+        assert np.allclose(gradient, approximation, rtol=1e-03, atol=1e-06 ), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+
 
     """ End of your code
     """
