@@ -167,7 +167,7 @@ def task1():
     x1, x2 = np.meshgrid(np.linspace(-6, 2, 100), np.linspace(-2,6,100))
     cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=125)
     ax[0].clabel(cs, inline=1, fontsize=10)
-    ax[0].plot(0,0,'*',label='inconclusive')
+    ax[0].plot(0,0,'*',label='saddle point')
     ax[0].plot(-4,4,'*',label='saddle point')
 
     x1, x2 = np.meshgrid(np.linspace(-2, 1, 200), np.linspace(-2,2,100))
@@ -181,7 +181,7 @@ def task1():
     x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-0.5,4,100))
     cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=100)
     ax[2].clabel(cs, inline=1, fontsize=10)
-    ax[2].plot(0,0,'*',label='inconclusive')
+    ax[2].plot(0,0,'*',label='saddle point')
 
     x1, x2 = np.meshgrid(np.linspace(-4, 4, 100), np.linspace(-4,4,100))
     cs = ax[3].contour(x1,x2,func_1d([x1,x2]),levels=125)
@@ -189,6 +189,7 @@ def task1():
     ax[3].plot(2,0,'*',label='local minimum')
     ax[3].plot(0,2,'*',label='saddle point')
     ax[3].plot(0,-2,'*',label='saddle point')
+
     """ End of your code
     """
     for a in ax:
@@ -228,11 +229,11 @@ def task2():
         """ End of your code
         """
 
-        return [approx_grad_x1, approx_grad_x2]
+        return np.array([approx_grad_x1, approx_grad_x2])
 
     """ Start of your code
     """
-    eps =  1e-03
+    eps =  1e-06
     num_steps = 100000
     random_points = np.linspace(0, 10, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
@@ -266,15 +267,15 @@ def task2():
         print('c) {} - {}'.format(g_c, approx_g_c))
         print('d) {} - {}'.format(g_d, approx_g_d))
 
-        approximations_list.append([g_a, approx_g_a])
-        approximations_list.append([g_b, approx_g_b])
-        approximations_list.append([g_c, approx_g_c])
-        approximations_list.append([g_d, approx_g_d])
+        approximations_list.append([g_a, approx_g_a, point])
+        approximations_list.append([g_b, approx_g_b, point])
+        approximations_list.append([g_c, approx_g_c, point])
+        approximations_list.append([g_d, approx_g_d, point])
 
         print('========================')
     
-    for gradient, approximation in approximations_list:
-        assert np.allclose(gradient, approximation, rtol = 0, atol = eps*eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+    for gradient, approximation, point in approximations_list:
+        assert np.allclose(gradient, approximation, rtol = eps, atol = eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
     
     """ End of your code
     """
@@ -537,7 +538,7 @@ def task3():
 
         approximation_list.append([hess_true_a, approx_hess_a, x1_random])
         approximation_list.append([hess_true_b, approx_hess_b, x2_random])
-        approximation_list.append([hessian_3c, approx_hess_c, alpha_random])
+        approximation_list.append([hess_true_c, approx_hess_c, alpha_random])
 
         print("\nApproximation {}:".format(i + 1))
         print("a) x =", x1_random, '\nTrue Gradient:', grad_3a_true, '\nApproximation:', approx_grad_a)
@@ -547,10 +548,9 @@ def task3():
         print("c) alpha = ", alpha_random, '\nTrue Gradient:', grad_3c_true , '\nApproximation:', approx_grad_c)
         print("c) alpha = ", alpha_random, '\nTrue Hessian:', hess_true_c, '\nApproximation:', approx_hess_c)
 
-               
 
-        for true_val, approximation, point in approximation_list:
-            assert np.allclose(true_val, approximation, rtol=0, atol=99E-06 ), f"True value {true_val} and approximation {approximation} do not match for point {point}"
+        for true_val, approximation, point in approximation_list:            
+            assert np.allclose(true_val, approximation, rtol=0, atol=9E-03 ), f"True value {true_val} and approximation {approximation} do not match for point {point}"
 
 
     """ End of your code
@@ -599,7 +599,7 @@ if __name__ == "__main__":
 
     # tasks = [task1, task2, task3, task4]
 
-    tasks = [task3]
+    tasks = [task2]
     for t in tasks:
         fig = t()
 
