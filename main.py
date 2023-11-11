@@ -274,7 +274,7 @@ def task2():
         print('========================')
     
     for gradient, approximation in approximations_list:
-        assert np.allclose(gradient, approximation, rtol = eps * 1e03, atol = eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+        assert np.allclose(gradient, approximation, rtol = 0, atol = eps*eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
     
     """ End of your code
     """
@@ -476,10 +476,11 @@ def hessian_3c(
     """ Start of your code
     """
     Ay = A @ y
-
+    Ay_transpose = Ay.T
+    hess = Ay_transpose @ Ay
     """ End of your code
     """
-    return np.array(np.linalg.norm(Ay))
+    return hess
 
 
 def task3():
@@ -504,7 +505,11 @@ def task3():
     """ Start of your code
     """
 
+    def partial(x, f:Callable, i:int, *args):
+        return f(x, *args)[i]
+    
     approximation_list = []
+    eps = 1E-6
     
     for i in range(3):
         x1_random = np.random.rand(2,) * 10
@@ -512,9 +517,9 @@ def task3():
         alpha_random = np.random.rand(1,) * 10
 
 
-        approx_grad_a = opt.approx_fprime(x1_random, func_3a, 1E-6, A, B, b)
-        approx_grad_b = opt.approx_fprime(x2_random, func_3b, 1E-6, K, t)
-        approx_grad_c = opt.approx_fprime(alpha_random, func_3c, 1E-6, A, x, y, b)
+        approx_grad_a = opt.approx_fprime(x1_random, func_3a, eps, A, B, b)
+        approx_grad_b = opt.approx_fprime(x2_random, func_3b, eps, K, t)
+        approx_grad_c = opt.approx_fprime(alpha_random, func_3c, eps, A, x, y, b)
         grad_3a_true = grad_3a(x1_random,A,B,b)
         grad_3b_true = grad_3b(x2_random,K,t)
         grad_3c_true = grad_3c(alpha_random, A, x, y, b)
@@ -523,14 +528,29 @@ def task3():
         approximation_list.append([grad_3b_true, approx_grad_b, x2_random])
         approximation_list.append([grad_3c_true, approx_grad_c, alpha_random])
 
-        # print("\nApproximation {}:".format(i + 1))
-        # print("a) x =", x1_random, '\nTrue Gradient:', grad_3a_true, '\nApproximation:', approx_grad_a)
-        # print("b) x =", x2_random, '\nTrue Gradient:', grad_3b_true, '\nApproximation:', approx_grad_b)
-        # print("c) alpha = ", alpha_random, '\nTrue Gradient:', grad_3c_true , '\nApproximation:', approx_grad_c)
+        approx_hess_a = np.concatenate((opt.approx_fprime(x1_random, partial, eps, grad_3a, 0 ,A,B, np.ndarray.flatten(b)),opt.approx_fprime(x1_random, partial, eps, grad_3a, 1 ,A,B, np.ndarray.flatten(b))), axis=None)
+        hess_true_a = np.ndarray.flatten(hessian_3a(x1_random, A, B, np.ndarray.flatten(b)))
+        approx_hess_b = np.concatenate((opt.approx_fprime(x2_random, partial, eps, grad_3b, 0, K,t), opt.approx_fprime(x2_random, partial, eps, grad_3b, 1, K,t)), axis=None)
+        hess_true_b = np.ndarray.flatten(hessian_3b(x,K,t))
+        approx_hess_c = opt.approx_fprime(alpha_random, grad_3c, eps, A,x,y,b)
+        hess_true_c = np.ndarray.flatten(hessian_3c(alpha_random, A,x,y,b))
 
-        
-    for gradient, approximation, point in approximation_list:
-        assert np.allclose(gradient, approximation, rtol=1e-03, atol=1e-06 ), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+        approximation_list.append([hess_true_a, approx_hess_a, x1_random])
+        approximation_list.append([hess_true_b, approx_hess_b, x2_random])
+        approximation_list.append([hessian_3c, approx_hess_c, alpha_random])
+
+        print("\nApproximation {}:".format(i + 1))
+        print("a) x =", x1_random, '\nTrue Gradient:', grad_3a_true, '\nApproximation:', approx_grad_a)
+        print("a) x =", x1_random, '\nTrue Hessian:', hess_true_a, '\nApproximation:', approx_hess_a)
+        print("b) x =", x2_random, '\nTrue Gradient:', grad_3b_true, '\nApproximation:', approx_grad_b)
+        print("b) x =", x2_random, '\nTrue Hessian:', hess_true_b, '\nApproximation:', approx_hess_b)
+        print("c) alpha = ", alpha_random, '\nTrue Gradient:', grad_3c_true , '\nApproximation:', approx_grad_c)
+        print("c) alpha = ", alpha_random, '\nTrue Hessian:', hess_true_c, '\nApproximation:', approx_hess_c)
+
+               
+
+        for true_val, approximation, point in approximation_list:
+            assert np.allclose(true_val, approximation, rtol=0, atol=99E-06 ), f"True value {true_val} and approximation {approximation} do not match for point {point}"
 
 
     """ End of your code
@@ -577,9 +597,9 @@ def task4():
 if __name__ == "__main__":
     pdf = PdfPages("figures.pdf")
 
-    tasks = [task1, task2, task3, task4]
+    # tasks = [task1, task2, task3, task4]
 
-    # tasks = [task3]
+    tasks = [task3]
     for t in tasks:
         fig = t()
 
