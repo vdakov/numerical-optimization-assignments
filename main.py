@@ -590,9 +590,8 @@ def task4():
 if __name__ == "__main__":
     pdf = PdfPages("figures.pdf")
 
-    # tasks = [task1, task2, task3, task4]
+    tasks = [task1, task2, task3, task4]
 
-    tasks = [task3]
     for t in tasks:
         fig = t()
 
