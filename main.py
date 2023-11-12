@@ -68,7 +68,7 @@ def grad_1b(x: np.ndarray) -> np.ndarray:
     """
     x1, x2 = x[0], x[1]
     partial_x1 = 4*x1 + x2*x2 + 3*x1*x1
-    partial_x2 = 2*x2*(x1 + 2)
+    partial_x2 = 2*x2*(x1 + 1)
     """ End of your code
     """
     return np.array([partial_x1, partial_x2])
@@ -190,10 +190,10 @@ def task1():
     ax[3].plot(0,2,'*',label='saddle point')
     ax[3].plot(0,-2,'*',label='saddle point')
 
-    """ End of your code
-    """
     for a in ax:
         a.legend()
+    """ End of your code
+    """
     return fig
 
 
@@ -233,7 +233,7 @@ def task2():
 
     """ Start of your code
     """
-    eps =  1e-06
+    eps =  1e-03
     num_steps = 100000
     random_points = np.linspace(0, 10, num_steps) #meant to simulate the set R has to be positive because of log
     random_indices = np.random.choice(len(random_points), 6, replace=False) #
@@ -275,7 +275,7 @@ def task2():
         print('========================')
     
     for gradient, approximation, point in approximations_list:
-        assert np.allclose(gradient, approximation, rtol = eps, atol = eps), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
+        assert np.allclose(gradient, approximation, rtol = 0, atol = 10*eps**2), f"Gradient {gradient} and approximation {approximation} do not match for point {point}"
     
     """ End of your code
     """
@@ -291,7 +291,6 @@ def func_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
-    b = np.ndarray.flatten(b)
 
     AB = A @ B
     v = AB @ x
@@ -316,7 +315,6 @@ def grad_3a(x: np.ndarray, A: np.ndarray, B: np.ndarray, b: np.ndarray) -> np.nd
 
     """ Start of your code
     """
-    b = np.ndarray.flatten(b)
 
     AB = A @ B
     ABT = AB.T
@@ -356,7 +354,6 @@ def func_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-    t = np.ndarray.flatten(t)
     ones = np.ones(x.size)
     x1 = ones @ x
     xt = x*t
@@ -376,7 +373,6 @@ def grad_3b(x: np.ndarray, K: np.ndarray, t: np.ndarray) -> np.ndarray:
 
     """ Start of your code
     """
-    t = np.ndarray.flatten(t)
 
     ones = np.ones(x.size)
     xt = x*t
@@ -418,9 +414,6 @@ def func_3c(
 
     """ Start of your code
     """
-    x = np.ndarray.flatten(x)
-    y = np.ndarray.flatten(y)
-    b = np.ndarray.flatten(b)
 
     ay = alpha*y
     xay = x - ay
@@ -445,11 +438,6 @@ def grad_3c(
 
     """ Start of your code
     """
-    x = np.ndarray.flatten(x)
-    y = np.ndarray.flatten(y)
-    b = np.ndarray.flatten(b)
-    
-
     ay = alpha*y
     
     xay = x - ay
@@ -506,6 +494,11 @@ def task3():
     """ Start of your code
     """
 
+    bflatten = np.ndarray.flatten(b)
+    tflatten = np.ndarray.flatten(t)
+    xflatten = np.ndarray.flatten(x)
+    yflatten = np.ndarray.flatten(y)
+
     def partial(x, f:Callable, i:int, *args):
         return f(x, *args)[i]
     
@@ -518,23 +511,23 @@ def task3():
         alpha_random = np.random.rand(1,) * 10
 
 
-        approx_grad_a = opt.approx_fprime(x1_random, func_3a, eps, A, B, b)
-        approx_grad_b = opt.approx_fprime(x2_random, func_3b, eps, K, t)
-        approx_grad_c = opt.approx_fprime(alpha_random, func_3c, eps, A, x, y, b)
-        grad_3a_true = grad_3a(x1_random,A,B,b)
-        grad_3b_true = grad_3b(x2_random,K,t)
-        grad_3c_true = grad_3c(alpha_random, A, x, y, b)
+        approx_grad_a = opt.approx_fprime(x1_random, func_3a, eps, A, B, bflatten)
+        approx_grad_b = opt.approx_fprime(x2_random, func_3b, eps, K, tflatten)
+        approx_grad_c = opt.approx_fprime(alpha_random, func_3c, eps, A, xflatten, yflatten, bflatten)
+        grad_3a_true = grad_3a(x1_random,A,B,bflatten)
+        grad_3b_true = grad_3b(x2_random,K,tflatten)
+        grad_3c_true = grad_3c(alpha_random, A, xflatten, yflatten, bflatten)
 
         approximation_list.append([grad_3a_true, approx_grad_a, x1_random])
         approximation_list.append([grad_3b_true, approx_grad_b, x2_random])
         approximation_list.append([grad_3c_true, approx_grad_c, alpha_random])
 
-        approx_hess_a = np.concatenate((opt.approx_fprime(x1_random, partial, eps, grad_3a, 0 ,A,B, np.ndarray.flatten(b)),opt.approx_fprime(x1_random, partial, eps, grad_3a, 1 ,A,B, np.ndarray.flatten(b))), axis=None)
-        hess_true_a = np.ndarray.flatten(hessian_3a(x1_random, A, B, np.ndarray.flatten(b)))
-        approx_hess_b = np.concatenate((opt.approx_fprime(x2_random, partial, eps, grad_3b, 0, K,t), opt.approx_fprime(x2_random, partial, eps, grad_3b, 1, K,t)), axis=None)
-        hess_true_b = np.ndarray.flatten(hessian_3b(x,K,t))
-        approx_hess_c = opt.approx_fprime(alpha_random, grad_3c, eps, A,x,y,b)
-        hess_true_c = np.ndarray.flatten(hessian_3c(alpha_random, A,x,y,b))
+        approx_hess_a = np.concatenate((opt.approx_fprime(x1_random, partial, eps, grad_3a, 0 ,A,B, bflatten),opt.approx_fprime(x1_random, partial, eps, grad_3a, 1 ,A,B, bflatten)), axis=None)
+        hess_true_a = np.ndarray.flatten(hessian_3a(x1_random, A, B, bflatten))
+        approx_hess_b = np.concatenate((opt.approx_fprime(x2_random, partial, eps, grad_3b, 0, K,tflatten), opt.approx_fprime(x2_random, partial, eps, grad_3b, 1, K,tflatten)), axis=None)
+        hess_true_b = np.ndarray.flatten(hessian_3b(x2_random,K,tflatten))
+        approx_hess_c = opt.approx_fprime(alpha_random, grad_3c, eps, A,xflatten,yflatten,bflatten)
+        hess_true_c = hessian_3c(alpha_random, A,xflatten,yflatten,bflatten)
 
         approximation_list.append([hess_true_a, approx_hess_a, x1_random])
         approximation_list.append([hess_true_b, approx_hess_b, x2_random])
@@ -550,7 +543,7 @@ def task3():
 
 
         for true_val, approximation, point in approximation_list:            
-            assert np.allclose(true_val, approximation, rtol=0, atol=9E-03 ), f"True value {true_val} and approximation {approximation} do not match for point {point}"
+            assert np.allclose(true_val, approximation, rtol=0, atol=100*eps ), f"True value {true_val} and approximation {approximation} do not match for point {point}"
 
 
     """ End of your code
@@ -599,7 +592,7 @@ if __name__ == "__main__":
 
     # tasks = [task1, task2, task3, task4]
 
-    tasks = [task2]
+    tasks = [task3]
     for t in tasks:
         fig = t()
 
