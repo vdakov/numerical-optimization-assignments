@@ -164,22 +164,22 @@ def task1():
 
     """ Start of your code
     """
-    x1, x2 = np.meshgrid(np.linspace(-6, 2, 100), np.linspace(-2,6,100))
-    cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=125)
+    x1, x2 = np.meshgrid(np.linspace(-6, 2, 200), np.linspace(-2,6,200))
+    cs = ax[0].contour(x1,x2,func_1a([x1,x2]),levels=75)
     ax[0].clabel(cs, inline=1, fontsize=10)
     ax[0].plot(0,0,'*',label='saddle point')
     ax[0].plot(-4,4,'*',label='saddle point')
 
-    x1, x2 = np.meshgrid(np.linspace(-2, 1, 200), np.linspace(-2,2,100))
-    cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=200)
+    x1, x2 = np.meshgrid(np.linspace(-2, 1, 300), np.linspace(-1.5,2,300))
+    cs = ax[1].contour(x1,x2,func_1b([x1,x2]),levels=130)
     ax[1].clabel(cs, inline=1, fontsize=10)
-    ax[1].plot(-4.0/3.0, 0, '*',label='saddle point')
+    ax[1].plot(-4.0/3.0, 0, '*',label='local maximum')
     ax[1].plot(-1,1,'*',label='saddle point')
     ax[1].plot(-1,-1,'*',label='saddle point')
     ax[1].plot(0,0,'*',label='local minimum')
 
-    x1, x2 = np.meshgrid(np.linspace(-2, 2, 100), np.linspace(-0.5,4,100))
-    cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=100)
+    x1, x2 = np.meshgrid(np.linspace(-1, 1, 150), np.linspace(-0.8,2,150))
+    cs = ax[2].contour(x1,x2,func_1c([x1,x2]),levels=75)
     ax[2].clabel(cs, inline=1, fontsize=10)
     ax[2].plot(0,0,'*',label='saddle point')
 
@@ -416,7 +416,7 @@ def func_3c(
     """
 
     ay = alpha*y
-    xay = x - ay
+    xay = x + ay
     Axay = A @ xay
     Axay = Axay - b
     f = 0.5*np.square(np.linalg.norm(Axay))
@@ -440,12 +440,12 @@ def grad_3c(
     """
     ay = alpha*y
     
-    xay = x - ay
+    xay = x + ay
     Axay = A @ xay
     Axay = Axay - b
     Axay = Axay.T
     Ay = A@y
-    grad = - Axay @ Ay
+    grad = Axay @ Ay
     """ End of your code
     """
     return grad
@@ -580,6 +580,8 @@ def task4():
     bounds_s[15]=(0, 1e20)
     bounds_s[31]=(0, 1e20)
 
+    print(A_eq_s)
+    #print(b_eq_s)
     sol_s = opt.linprog(c_s, A_eq=A_eq_s, b_eq=b_eq_s, bounds=bounds_s)['x']
     out = np.sum(sol_s@c_s)
     print('Minimum total time spent: {} hours'.format(out)) #final answer
@@ -591,7 +593,7 @@ if __name__ == "__main__":
     pdf = PdfPages("figures.pdf")
 
     tasks = [task1, task2, task3, task4]
-
+    
     for t in tasks:
         fig = t()
 
