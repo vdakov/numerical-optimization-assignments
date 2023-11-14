@@ -580,8 +580,7 @@ def task4():
     bounds_s[15]=(0, 1e20)
     bounds_s[31]=(0, 1e20)
 
-    print(A_eq_s)
-    #print(b_eq_s)
+
     sol_s = opt.linprog(c_s, A_eq=A_eq_s, b_eq=b_eq_s, bounds=bounds_s)['x']
     out = np.sum(sol_s@c_s)
     print('Minimum total time spent: {} hours'.format(out)) #final answer
