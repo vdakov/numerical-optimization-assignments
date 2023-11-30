@@ -178,14 +178,14 @@ def task2():
 
     """ Start of your code
     """
-    contour_levels = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
-    lim = 0.5
-    x1, x2 = np.meshgrid(np.linspace(0.1, lim), np.linspace(0.1, lim))
+    contour_levels = np.linspace(-0.8, 0, 10)
+    x1, x2 = np.meshgrid(np.linspace(0.8, 9), np.linspace(-0.1, 3.5))
     
-    objective = x2/x1
-    #h = a + b(x2-c)*(x2-c) - x1
+    objective = -x2/x1
+    h = a + b*(x2-c)*(x2-c) - x1
 
-    countor = ax.contour(x1,x2,objective,levels=contour_levels)
+    ax.contour(x1, x2, h, [0], colors='black')
+    countor = ax.contourf(x1,x2,objective,levels=contour_levels)
     plt.colorbar(countor)
 
     """ End of your code
