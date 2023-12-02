@@ -185,8 +185,10 @@ def task2():
     h = a + b*(x2-c)*(x2-c) - x1
 
     ax.contour(x1, x2, h, [0], colors='black')
-    countor = ax.contourf(x1,x2,objective,levels=contour_levels)
-    plt.colorbar(countor)
+    contour = ax.contourf(x1,x2,objective,levels=contour_levels)
+    ax.scatter(2, 1.5, c='blue', marker='*') # graphical optimum 
+    ax.scatter(2, np.sqrt(2), c='red', marker='x') # analytical optimum 
+    plt.colorbar(contour)
 
     """ End of your code
     """
