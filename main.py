@@ -178,16 +178,16 @@ def task2():
 
     """ Start of your code
     """
-    contour_levels = np.linspace(-0.8, 0, 10)
-    x1, x2 = np.meshgrid(np.linspace(0.8, 9), np.linspace(-0.1, 3.5))
+    contour_levels = [0, 0.1, 0.25, 0.5, 0.7, 1, 2, 3, 4, 5.5]
+    x1, x2 = np.meshgrid(np.linspace(0.9, 8), np.linspace(0, 5))
     
-    objective = -x2/x1
+    objective = x2/x1
     h = a + b*(x2-c)*(x2-c) - x1
 
-    ax.contour(x1, x2, h, [0], colors='black')
+    ax.contour(x1, x2, h, [0], colors='orange')
     contour = ax.contourf(x1,x2,objective,levels=contour_levels)
-    ax.scatter(2, 1.5, c='blue', marker='*') # graphical optimum 
-    ax.scatter(2, np.sqrt(2), c='red', marker='x') # analytical optimum 
+    ax.scatter(2,  1.5, c='blue', marker='x', label='Graphical opt')  
+    ax.scatter(2, np.sqrt(2), c='red', marker='*', label='Analytical opt')  
     plt.colorbar(contour)
 
     """ End of your code
