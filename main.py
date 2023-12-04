@@ -115,10 +115,10 @@ def task1():
     contours_inequality.set(path_effects=[feasible_region_indicator])
 
     ax[0].scatter(1,-2, c=color_valid, marker=marker_invalid)
-    ax[0].scatter(1.36, 1.84, c=color_valid, marker=marker_invalid)
-    ax[0].scatter(1.91 , -1.46, c=color_valid, marker=marker_valid)
+    ax[0].scatter(1.36, 1.808, c=color_valid, marker=marker_invalid)
+    ax[0].scatter(1.91 , -1.474, c=color_valid, marker=marker_valid)
 
-    ax[0].scatter(1.91 , -1.46, c=color_optimal, marker=marker_optimal)
+    ax[0].scatter(1.91 , -1.474, c=color_optimal, marker=marker_optimal)
 
     # Plot B
     contours_objective = ax[1].contour(x1, x2, function_b, contour_levels)
