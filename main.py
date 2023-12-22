@@ -1,208 +1,150 @@
-#!/usr/bin/env python
-
-""" Python code submission file.
-
-IMPORTANT:
-- Do not include any additional python packages.
-- Do not change the existing interface and return values of the task functions.
-- Prior to your submission, check that the pdf showing your plots is generated.
-"""
-
-from matplotlib import colors
 import numpy as np
+import json
+from scipy.optimize import approx_fprime
+
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from numpy.core.fromnumeric import shape
-from scipy.linalg import inv
+from matplotlib import colors
 from matplotlib.backends.backend_pdf import PdfPages
-from typing import Callable
-from matplotlib import patheffects
 
-import numpy as np
+np.random.seed(10)
 
+class NeuralNetwork:
+    def __init__(self, n_in, n_hidden, n_out):
+        self.n_in = n_in 
+        self.n_hidden = n_hidden
+        self.n_out = n_out 
 
-def task1():
-    """Lagrange Multiplier Problem
+        self.theta = self.init_params()
 
-    Requirements for the plots:
-        - ax[0] Contour plot for a)
-        - ax[1] Contour plot for b)
-        - ax[2] Contour plot for c)
+    def init_params(self):
+        theta = {}
+        theta['W0'] = np.array(0)
+        theta['b0'] = np.array(0)
+        theta['W1'] = np.array(0)
+        theta['b1'] = np.array(0)
+        return theta
+
+    def export_model(self):
+        with open(f'model.json', 'w') as fp:
+            json.dump({key: value.tolist() for key, value in self.theta.items()}, fp)
+
+def task():
+    """ Neural Network
+
+        Requirements for the plots:
+            - ax[0] Plot showing the training loss and training accuracy
+            - ax[1] Plot showing the confusion matrix on the test data (using matplotlib.pyplot.imshow)
+            - ax[2] Scatter plot showing the labeled training data
+            - ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
     """
+    with np.load('data.npz') as data_set:
+        # get the training data
+        x_train = data_set['x_train']
+        y_train = data_set['y_train']
 
-    lim = 5
+        # get the test data
+        x_test = data_set['x_test']
+        y_test = data_set['y_test']
 
-    fig, ax = plt.subplots(1, 3, figsize=(18, 6))
-    fig.suptitle("Task 1 - Contour plots + Constraints", fontsize=16)
+    print(f'\nTraining set with {x_train.shape[0]} data samples')
+    print(f'Test set with {x_test.shape[0]} data samples')
+    
 
-    for title, a in zip(["a)", "b)", "c)"], ax):
-        a.set_title(title)
-        a.set_xlabel("$x_1$")
-        a.set_ylabel("$x_2$")
-        a.set_aspect("equal")
-        a.set_xlim([-lim, lim])
-        a.set_ylim([-lim, lim])
+    extent = (x_train[:,0].min(), x_train[:,0].max(), x_train[:,1].min(), x_train[:,1].max())
+    cl_colors = ['blue', 'orange', 'purple', 'red', 'green']
+    cmap = colors.ListedColormap(cl_colors)
 
-    """ Start of your code
+    fig, ax = plt.subplots(1,4,figsize=(18,4))
+    # ax[0] Plot showing the training loss and training accuracy
+    ax[0].set_title('Training loss')
+    
+    # ax[1] Plot showing the confusion matrix on the test data (using matplotlib.pyplot.imshow)
+    conf_mat = np.eye(len(np.unique(y_train)))
+    conf = ax[1].imshow(conf_mat), ax[1].set_title('Confusion matrix (test data)')
+    fig.colorbar(conf[0], ax=ax[1],shrink=0.5)
+    ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
+    ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
+
+    # ax[2] Scatter plot showing the labeled training data
+    for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
+        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
+    ax[2].set_title('Training data')
+    ax[2].legend() 
+    ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
+
+    # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
+    N = 500
+    ax[3].imshow(np.ones((N,N)), alpha=np.random.rand(N,N), origin='lower', extent=extent, cmap=cmap, interpolation="nearest")
+    ax[3].set_title('Learned decision boundary')
+    ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
+    
+
     """
-    # Plot example (remove in submission)
-    # EXAMPLE START
+    Start your code here
 
-    #contour_levels = 10
-    #x1, x2 = np.meshgrid(np.linspace(-lim, lim), np.linspace(-lim, lim))
-    #objective = x1 - 2 * x2  # some arbitrary objective function
-    #equality_connstraint = -0.5 * x1 - x2 - 2  # example equality constriant (=0)
-    #inequality_constraint = -x1 + x2 + 2  # example inequality constriant (<=0)
-#
-    ## plot the level lines of the objective function and add labels to the lines
-    #contours_objective = ax[0].contour(x1, x2, objective, contour_levels)
-    #ax[0].clabel(contours_objective, fmt="%2.1f", use_clabeltext=True)
-#
-    ## plot the equality constraint by using ax.contour with the level line at 0
-    #constraint_color = "orangered"
-    #ax[0].contour(x1, x2, equality_connstraint, [0], colors=constraint_color)
-#
-    ## plot the inequality constraint in the same way but also add indicator for the feasible region
-    #feasible_region_indicator = patheffects.withTickedStroke(angle=-90, length=1)
-    #contours_inequality = ax[0].contour(
-    #    x1, x2, inequality_constraint, [0], colors=constraint_color
-    #)
-    #contours_inequality.set(path_effects=[feasible_region_indicator])
-#
-    ## plot some (arbitrary) candidate points
-    #color_optimal = "green"
-    #marker_optimal = "*"
-    #ax[0].scatter(0, -2, c=color_optimal, marker=marker_optimal, zorder=2)
-    #color_valid = "black"
-    #marker_valid = "o"
-    #ax[0].scatter(2, -3, c=color_valid, marker=marker_valid, zorder=2)
-    #color_invalid = "red"
-    #marker_invalid = "x"
-    #ax[0].scatter(1, 1, c=color_invalid, marker=marker_invalid, zorder=2)
-
-    # EXAMPLE END
-
-    constraint_color = 'orange'
-    color_optimal = 'green'
-    color_invalid = 'red'
-    color_valid = 'black'
-    
-    marker_optimal = '*'
-    marker_invalid = 'x'
-    marker_valid = 'o'
-
-    x1, x2 = np.meshgrid(np.linspace(-lim, lim), np.linspace(-lim, lim))
-    contour_levels = 10
-
-    function_a = -x1 + 2*x2
-    eq_constraint_a = -x1 - 0.5*x2*x2 + 3 
-    ineq_constraint_a = -0.5*x2 -3*x1 + 5
-
-    function_b = 3*x2 + 0.33*x1*x1
-    eq_constraint_b = (1/x2)*(x1*x1 - 3) - 1
-    ineq_constraint_b = 0.5*x1 - 1 - x2
-
-    function_c = 0.5*(2*x1*x1 + x1*x2 + 4*x2*x2)
-    eq_constraint_c = 0.5*x1 - x2 - 1
-    ineq_constraint_c = x1*x1 + x2 - 3
-    
-    # Plot A
-    contours_objective = ax[0].contour(x1, x2, function_a, contour_levels)
-    ax[0].clabel(contours_objective, fmt="%2.1f", use_clabeltext=True)
-    ax[0].contour(x1, x2, eq_constraint_a, [0], colors=constraint_color)
-    feasible_region_indicator = patheffects.withTickedStroke(angle=-90, length=1)
-    contours_inequality = ax[0].contour(x1, x2, ineq_constraint_a, [0], colors=constraint_color)
-    contours_inequality.set(path_effects=[feasible_region_indicator])
-
-    ax[0].scatter(1,-2, c=color_valid, marker=marker_invalid)
-    ax[0].scatter(1.36, 1.808, c=color_valid, marker=marker_invalid)
-    ax[0].scatter(1.91 , -1.474, c=color_valid, marker=marker_valid)
-
-    ax[0].scatter(1.91 , -1.474, c=color_optimal, marker=marker_optimal)
-
-    # Plot B
-    contours_objective = ax[1].contour(x1, x2, function_b, contour_levels)
-    ax[1].clabel(contours_objective, fmt="%2.1f", use_clabeltext=True)
-    ax[1].contour(x1, x2, eq_constraint_b, [0], colors=constraint_color)
-    feasible_region_indicator = patheffects.withTickedStroke(angle=-90, length=1)
-    contours_inequality = ax[1].contour(x1, x2, ineq_constraint_b, [0], colors=constraint_color)
-    contours_inequality.set(path_effects=[feasible_region_indicator])
-    
-    ax[1].scatter(0, -3, c=color_valid, marker=marker_invalid)
-    ax[1].scatter(1.68, -0.15, c=color_valid, marker=marker_valid)
-    ax[1].scatter(-1.18614, -1.59307, c=color_valid, marker=marker_valid)
-    
-
-    ax[1].scatter(-1.18614, -1.59307, c=color_optimal, marker=marker_optimal)
-
-
-    # Plot C
-    contours_objective = ax[2].contour(x1, x2, function_c, contour_levels)
-    ax[2].clabel(contours_objective, fmt="%2.1f", use_clabeltext=True)
-    ax[2].contour(x1, x2, eq_constraint_c, [0], colors=constraint_color)
-    feasible_region_indicator = patheffects.withTickedStroke(angle=-90, length=1)
-    contours_inequality = ax[2].contour(x1, x2, ineq_constraint_c, [0], colors=constraint_color)
-    contours_inequality.set(path_effects=[feasible_region_indicator])
-
-
-    ax[2].scatter(0.714, -0.642, c=color_valid, marker=marker_valid)
-    ax[2].scatter(1.76, -0.11, c=color_invalid, marker=marker_invalid)
-    ax[2].scatter(-2.26, -2.13, c=color_invalid, marker=marker_invalid)
-
-    ax[2].scatter(0.714, -0.642, c=color_optimal, marker=marker_optimal)
-    """ End of your code
     """
+    def forward(x):
+        z1 = network.theta['W0']@x + network.theta['b0']
+        a1 = softplus(z1)
+        z2 = network.theta['W1']@a1 + network.theta['b1']
+        a2 = softmax(z2)
+        return a2
+    
+    def softplus(z1): np.log(1 + np.power(z1, np.e))
+    
+    def softmax(z2): np.power(z2, np.e) / np.sum(np.power(z2, np.e))
+    
+    def backward(y, predicted):
+        return -1
+    
+    def one_hot(y):
+        onehot = np.zeros(n_out)
+        onehot[y] = 1
+        return onehot
+    
+    def cross_entropy(a, y): 
+        return -1
+
+    n_in = 2
+    n_hidden = 12
+    n_out = 5
+    lr = 0.01
+
+    network = NeuralNetwork(n_in, n_hidden, n_out)
+    confustion_matrix = np.zeros((n_out, n_out))
+
+    network.theta['W0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=(n_hidden, n_in))
+    network.theta['W1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=(n_out, n_hidden))
+    network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=1)
+    network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=1)
+
+    # Training
+    # one or more epochs? can we change the class neural network, it seems they do not want. 
+    loss = 0
+    for xs, target in zip(x_train, y_train):
+        output = forward(network, xs)
+        loss += cross_entropy(np.argmax(output), one_hot(target))
+        
+        gradients = backward(network, xs)
+        network.theta['W0'] -= lr*gradients['W0']
+        network.theta['W1'] -= lr*gradients['W1']
+        network.theta['b0'] -= lr*gradients['b0']
+        network.theta['b1'] -= lr*gradients['b1']
+
+    
+    # Testing
+    for x, truth in zip(x_test, y_test):
+        predicted = np.argmax(forward(network, x))
+        confustion_matrix[truth][predicted] += 1
+
+    # Write down everything
+    # Just copy the above code and add the 
+    #network.export_model()
 
     return fig
 
-
-def task2():
-    """Glider Trajectory Problem
-
-    Requirements for the plot (only main ax):
-        - filled contour plot for objective function
-        - contour plot for constraint at level set 0
-        - mark graphically estimated optimum
-        - mark analytically determined optimum
-    """
-
-    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
-    fig.suptitle("Task 2 - Glider's Trajectory", fontsize=16)
-
-    ax.set_xlabel("$x_1$")
-    ax.set_ylabel("$x_2$")
-
-    a = 1.0
-    b = 0.5
-    c = 0.0
-
-    """ Start of your code
-    """
-    contour_levels = [0, 0.1, 0.25, 0.5, 0.7, 1, 2, 3, 4, 5.5]
-    x1, x2 = np.meshgrid(np.linspace(0.9, 8), np.linspace(0, 5))
-    
-    objective = x2/x1
-    h = a + b*(x2-c)*(x2-c) - x1
-
-    ax.contour(x1, x2, h, [0], colors='orange')
-    contour = ax.contourf(x1,x2,objective,levels=contour_levels)
-    ax.scatter(2,  1.5, c='blue', marker='x', label='Graphical opt')  
-    ax.scatter(2, np.sqrt(2), c='red', marker='*', label='Analytical opt')  
-    plt.colorbar(contour)
-
-    """ End of your code
-    """
-    
-    plt.legend()
-    return fig
-
-
-if __name__ == "__main__":
-    tasks = [task1, task2]
-
+if __name__ == '__main__':
     pdf = PdfPages("figures.pdf")
-    for task in tasks:
-        retval = task()
-        fig = retval[0] if type(retval) is tuple else retval
-        pdf.savefig(fig)
+    fig = task()
+    pdf.savefig(fig)
     pdf.close()
