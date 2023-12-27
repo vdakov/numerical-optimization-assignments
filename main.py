@@ -88,53 +88,68 @@ def task():
         a1 = softplus(z1)
         z2 = network.theta['W1']@a1 + network.theta['b1']
         a2 = softmax(z2)
-        return a2
+        return a2, z2, a1, z1
     
-    def softplus(z1): np.log(1 + np.power(z1, np.e))
+    def softplus(z1): 
+        return np.log(1 + np.power(z1, np.e))
     
-    def softmax(z2): np.power(z2, np.e) / np.sum(np.power(z2, np.e))
+    def softmax(z2): 
+        return np.power(z2, np.e) / np.sum(np.power(z2, np.e))
     
-    def backward(y, predicted):
-        return -1
+    def backward(xs, a2, z2, a1, z1, target):
+        
+        grad_W0 = -1
+        grad_b0 = -1
+        grad_W1 = -1
+        grad_b1 = -1
+        return {'W0': grad_W0, 'W1': grad_W1, 'b0': grad_b0, 'b1': grad_b1}
     
     def one_hot(y):
         onehot = np.zeros(n_out)
-        onehot[y] = 1
+        onehot[y-1] = 1
         return onehot
     
     def cross_entropy(a, y): 
-        return -1
+        return -np.sum(y*np.log(a))
 
     n_in = 2
     n_hidden = 12
     n_out = 5
+    epoch = 200
     lr = 0.01
 
     network = NeuralNetwork(n_in, n_hidden, n_out)
     confustion_matrix = np.zeros((n_out, n_out))
+    history = []
 
     network.theta['W0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=(n_hidden, n_in))
     network.theta['W1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=(n_out, n_hidden))
     network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=1)
     network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=1)
 
+
     # Training
-    # one or more epochs? can we change the class neural network, it seems they do not want. 
-    loss = 0
-    for xs, target in zip(x_train, y_train):
-        output = forward(network, xs)
-        loss += cross_entropy(np.argmax(output), one_hot(target))
+    for _ in range(epoch):
+        loss = 0
+        for xs, target in zip(x_train, y_train):
+            y_one_hot = one_hot(target)
+            a2, z2, a1, z1 = forward(xs)
+            loss += cross_entropy(a2, y_one_hot)
+
+            gradients = backward(xs, a2, z2, a1, z1, target)
+            network.theta['W0'] -= lr*gradients['W0']
+            network.theta['W1'] -= lr*gradients['W1']
+            network.theta['b0'] -= lr*gradients['b0']
+            network.theta['b1'] -= lr*gradients['b1']
         
-        gradients = backward(network, xs)
-        network.theta['W0'] -= lr*gradients['W0']
-        network.theta['W1'] -= lr*gradients['W1']
-        network.theta['b0'] -= lr*gradients['b0']
-        network.theta['b1'] -= lr*gradients['b1']
+        loss = loss/x_train.shape[0]
+        history.append(loss)
+
 
     
     # Testing
     for x, truth in zip(x_test, y_test):
-        predicted = np.argmax(forward(network, x))
+        predicted = np.argmax(forward(x))
         confustion_matrix[truth][predicted] += 1
 
     # Write down everything
