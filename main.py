@@ -91,17 +91,17 @@ def task():
         return a2, z2, a1, z1
     
     def softplus(z1): 
-        return np.log(1 + np.power(z1, np.e))
+        return np.log(1.0 + np.power(np.e, z1))
     
     def softmax(z2): 
-        return np.power(z2, np.e) / np.sum(np.power(z2, np.e))
+        return np.power(np.e, z2) / np.sum(np.power(np.e, z2))
     
     def backward(xs, a2, z2, a1, z1, target):
         
-        grad_W0 = -1
-        grad_b0 = -1
-        grad_W1 = -1
-        grad_b1 = -1
+        grad_W0 = 1
+        grad_b0 = 1
+        grad_W1 = 1
+        grad_b1 = 1
         return {'W0': grad_W0, 'W1': grad_W1, 'b0': grad_b0, 'b1': grad_b1}
     
     def one_hot(y):
@@ -109,7 +109,7 @@ def task():
         onehot[y-1] = 1
         return onehot
     
-    def cross_entropy(a, y): 
+    def cross_entropy(a, y):
         return -np.sum(y*np.log(a))
 
     n_in = 2
@@ -124,9 +124,8 @@ def task():
 
     network.theta['W0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=(n_hidden, n_in))
     network.theta['W1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=(n_out, n_hidden))
-    network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=1)
-    network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=1)
-
+    network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=n_hidden)
+    network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=n_out)
 
     # Training
     for _ in range(epoch):
@@ -149,7 +148,7 @@ def task():
     
     # Testing
     for x, truth in zip(x_test, y_test):
-        predicted = np.argmax(forward(x))
+        predicted = 1#np.argmax(forward(x))
         confustion_matrix[truth][predicted] += 1
 
     # Write down everything
