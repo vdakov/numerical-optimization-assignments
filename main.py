@@ -97,11 +97,33 @@ def task():
         return np.power(np.e, z2) / np.sum(np.power(np.e, z2))
     
     def backward(xs, a2, z2, a1, z1, target):
+        d_a2_z2 = np.diag(a2) @ (np.diag(np.ones(len(a2))) - a2.T)
+        S = len(a2)
+        y_oh = one_hot(target)
+        d_L_a2 = (-1/S) * np.linalg.inv(np.diag(a2)) @ y_oh
+        d_z2_h2 = np.diag(np.ones(len(z2)))
+        d_h2_a1 = network.theta['W1']
+        d_a1_z1 = np.diag(np.exp(z1) / (np.exp(z1) + 1))
+        d_z2_b1 = np.eye(len(z2), len(network.theta['b1']))
+        d_z1_b0 = np.eye(len(z1), len(network.theta['b0']))
+        d_h2_W1 = a1.T.reshape(len(a1.T), 1)
+        d_h1_W0 = xs.T.reshape(len(xs.T), 1)
+        d_z1_h1 =  np.eye(len(z1), len(z1))
+
+        delta1 = d_L_a2 @ d_a2_z2
+        delta2 = (delta1.T @ d_z2_h2 @  d_h2_a1 @ d_a1_z1).T
         
-        grad_W0 = 1
-        grad_b0 = 1
-        grad_W1 = 1
-        grad_b1 = 1
+        delta1= delta1.reshape(len(delta1), 1)
+        delta2= delta2.reshape(len(delta2), 1)
+ 
+
+        grad_W0 = (delta2.T @ d_z1_h1).T @ d_h1_W0.T
+        grad_b0 = (delta2.T @ d_z1_b0).T
+        grad_W1 = (delta1.T @ d_z2_h2).T @ d_h2_W1.T
+        grad_b1 = (delta1.T @ d_z2_b1).T
+
+        # print(grad_b0.shape, grad_b1.shape, grad_W0.shape, grad_W1.shape)
+
         return {'W0': grad_W0, 'W1': grad_W1, 'b0': grad_b0, 'b1': grad_b1}
     
     def one_hot(y):
@@ -115,7 +137,7 @@ def task():
     n_in = 2
     n_hidden = 12
     n_out = 5
-    epoch = 200
+    epochs = 200
     lr = 0.01
 
     network = NeuralNetwork(n_in, n_hidden, n_out)
@@ -128,7 +150,7 @@ def task():
     network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=n_out)
 
     # Training
-    for _ in range(epoch):
+    for _ in range(epochs):
         loss = 0
         for xs, target in zip(x_train, y_train):
             y_one_hot = one_hot(target)
@@ -138,22 +160,23 @@ def task():
             gradients = backward(xs, a2, z2, a1, z1, target)
             network.theta['W0'] -= lr*gradients['W0']
             network.theta['W1'] -= lr*gradients['W1']
-            network.theta['b0'] -= lr*gradients['b0']
-            network.theta['b1'] -= lr*gradients['b1']
+            network.theta['b0'] -= lr*gradients['b0'].flatten()
+            network.theta['b1'] -= lr*gradients['b1'].flatten()
         
         loss = loss/x_train.shape[0]
+        print(loss)
         history.append(loss)
 
 
     
     # Testing
     for x, truth in zip(x_test, y_test):
-        predicted = 1#np.argmax(forward(x))
+        predicted = np.argmax(forward(x))
         confustion_matrix[truth][predicted] += 1
 
     # Write down everything
     # Just copy the above code and add the 
-    #network.export_model()
+    network.export_model()
 
     return fig
 
