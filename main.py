@@ -55,28 +55,7 @@ def task():
     cmap = colors.ListedColormap(cl_colors)
 
     fig, ax = plt.subplots(1,4,figsize=(18,4))
-    # ax[0] Plot showing the training loss and training accuracy
-    ax[0].set_title('Training loss')
-    
-    # ax[1] Plot showing the confusion matrix on the test data (using matplotlib.pyplot.imshow)
-    conf_mat = np.eye(len(np.unique(y_train)))
-    conf = ax[1].imshow(conf_mat), ax[1].set_title('Confusion matrix (test data)')
-    fig.colorbar(conf[0], ax=ax[1],shrink=0.5)
-    ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
-    ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
 
-    # ax[2] Scatter plot showing the labeled training data
-    for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
-        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
-    ax[2].set_title('Training data')
-    ax[2].legend() 
-    ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
-
-    # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
-    N = 500
-    ax[3].imshow(np.ones((N,N)), alpha=np.random.rand(N,N), origin='lower', extent=extent, cmap=cmap, interpolation="nearest")
-    ax[3].set_title('Learned decision boundary')
-    ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
     
 
     """
@@ -168,11 +147,51 @@ def task():
         history.append(loss)
 
 
+
+    
     
     # Testing
+    y_pred_test = []
     for x, truth in zip(x_test, y_test):
-        predicted = np.argmax(forward(x))
+        predicted = np.argmax(forward(x)[0])
+        y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
+
+    y_pred_train = []
+    for x, truth in zip(x_train, x_train):
+        predicted = np.argmax(forward(x)[0])
+        y_pred_train.append(predicted)
+
+    y_pred_test = np.array(y_pred_test)
+    y_pred_train = np.array(y_pred_train)
+
+
+    #Plotting
+    ax[0].set_title('Training loss')
+    ax[0].plot(history) 
+
+    conf = ax[1].imshow(confustion_matrix), ax[1].set_title('Confusion matrix (test data)')
+    fig.colorbar(conf[0], ax=ax[1],shrink=0.5)
+    ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
+    ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
+
+     # ax[2] Scatter plot showing the labeled training data
+    for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
+        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
+        ax[3].scatter(x_test[:,0][y_pred_test==idx], x_test[:, 1][y_pred_test==idx],label=cl, c=cl_colors[idx])
+        ax[3].scatter(x_train[:,0][y_pred_train==idx], x_train[:, 1][y_pred_train==idx],label=cl, c=cl_colors[idx])
+
+    ax[2].set_title('Training data')
+    ax[2].legend() 
+    ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
+
+    # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
+
+
+    
+
+    ax[3].set_title('Learned decision boundary')
+    ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
 
     # Write down everything
     # Just copy the above code and add the 
