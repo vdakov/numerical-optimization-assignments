@@ -116,7 +116,7 @@ def task():
     n_hidden = 12
     n_out = 5
     epochs = 200
-    lr = 0.01
+    lr = 0.1
 
     network = NeuralNetwork(n_in, n_hidden, n_out)
     confustion_matrix = np.zeros((n_out, n_out))
@@ -129,7 +129,8 @@ def task():
 
     # Training
     S = len(x_train)
-    for _ in range(epochs):
+    for it in range(epochs):
+
         loss = 0
         g_w0 = 0
         g_w1 = 0
@@ -156,34 +157,15 @@ def task():
         network.theta['b0'] -= lr * g_b0
         network.theta['b1'] -= lr * g_b1
            
-
-        # network.theta['W0'] -= (1/S) * lr *gradients['W0']
-        # network.theta['W1'] -= (1/S) * lr*gradients['W1']
-        # network.theta['b0'] -= (1/S) * lr*gradients['b0'].flatten()
-        # network.theta['b1'] -= (1/S) * lr*gradients['b1'].flatten()
-        
         loss = loss/x_train.shape[0]
-        print(loss)
         history.append(loss)
 
-
-
-    
-    
     # Testing
     y_pred_test = []
     for x, truth in zip(x_test, y_test):
         predicted = np.argmax(forward(x)[0])
         y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
-
-    y_pred_train = []
-    for x, truth in zip(x_train, x_train):
-        predicted = np.argmax(forward(x)[0])
-        y_pred_train.append(predicted)
-
-    y_pred_test = np.array(y_pred_test)
-    y_pred_train = np.array(y_pred_train)
 
 
     #Plotting
@@ -198,8 +180,6 @@ def task():
      # ax[2] Scatter plot showing the labeled training data
     for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
         ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
-        ax[3].scatter(x_test[:,0][y_pred_test==idx], x_test[:, 1][y_pred_test==idx],label=cl, c=cl_colors[idx])
-        ax[3].scatter(x_train[:,0][y_pred_train==idx], x_train[:, 1][y_pred_train==idx],label=cl, c=cl_colors[idx])
 
     ax[2].set_title('Training data')
     ax[2].legend() 
@@ -207,12 +187,22 @@ def task():
 
     # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
 
+    random_samples = np.random.uniform(2, 7 + 1, size=(10000, 2))    
+    y_pred = []
+
+    for x in random_samples:
+        predicted = np.argmax(forward(x)[0])
+        y_pred.append(predicted)
+
+    ax[3].scatter(random_samples[:, 0], random_samples[:, 1], c=y_pred)
     ax[3].set_title('Learned decision boundary')
     ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
 
     # Write down everything
     # Just copy the above code and add the 
     network.export_model()
+
+
 
     return fig
 
