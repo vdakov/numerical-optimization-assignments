@@ -50,7 +50,7 @@ def task():
     print(f'Test set with {x_test.shape[0]} data samples')
     
 
-    extent = (x_train[:,0].min(), x_train[:,0].max(), x_train[:,1].min(), x_train[:,1].max())
+    extent = [x_train[:,0].min(), x_train[:,0].max(), x_train[:,1].min(), x_train[:,1].max()]
     cl_colors = ['blue', 'orange', 'purple', 'red', 'green']
     cmap = colors.ListedColormap(cl_colors)
 
@@ -160,16 +160,25 @@ def task():
         history.append(loss)
 
     # Testing
+        
+    y_pred_train = []
+    for x, truth in zip(x_train, y_train):
+        predicted = np.argmax(forward(x)[0])
+        y_pred_train.append(predicted)
+    
+
     y_pred_test = []
     for x, truth in zip(x_test, y_test):
         predicted = np.argmax(forward(x)[0])
         y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
 
-    
+    y_pred_train = np.array(y_pred_train)
     y_pred_test = np.array(y_pred_test)
-    accuracy = len(y_test[y_test == y_pred_test]) / len(y_test)
-    print(f'Accuracy: {accuracy}')
+    train_accuracy = len(y_train[y_train == y_pred_train]) / len(y_train)
+    test_accuracy = len(y_test[y_test == y_pred_test]) / len(y_test)
+    print(f'Train Accuracy: {train_accuracy}')
+    print(f'Test Accuracy: {test_accuracy}')
 
 
     #Plotting
@@ -182,19 +191,22 @@ def task():
     ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
     ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
 
-     # ax[2] Scatter plot showing the labeled training data
+    #  ax[2] Scatter plot showing the labeled training data
     for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
         ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl, c=cl_colors[idx])
+    # for idx, x in enumerate(x_train):
+    #     ax[2].scatter(x_train[idx,0], x_train[idx, 1], c=cl_colors[y_train[idx]])
 
     ax[2].set_title('Training data')
     ax[2].legend() 
     ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
 
     # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
-    x1_values = np.linspace(2, 8, 100)
-    x2_values = np.linspace(2, 8, 100)
+    x1_values = np.linspace(extent[0], extent[1], 100)
+    x2_values = np.linspace(extent[2], extent[3], 100)
     xx1, xx2 = np.meshgrid(x1_values, x2_values)
     meshgrid_samples = np.c_[xx1.ravel(), xx2.ravel()]
+    
 
     predictions = []
 
@@ -202,7 +214,7 @@ def task():
         predictions.append(np.argmax(forward(x)[0]))
     predictions = np.array(predictions)
     predictions = predictions.reshape(xx1.shape)
-
+    predictions = np.flip(predictions, axis = 0) # because otherwise the 0 is on top 
 
 
 
