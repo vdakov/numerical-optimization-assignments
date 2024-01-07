@@ -56,6 +56,7 @@ def task():
 
     fig, ax = plt.subplots(1,4,figsize=(18,4))
 
+    # for x in meshgrid_samples:
     
 
     """
@@ -100,13 +101,11 @@ def task():
         grad_W1 = (delta1.T @ d_z2_h2).T @ d_h2_W1.T
         grad_b1 = (delta1.T @ d_z2_b1).T
 
-        # print(grad_b0.shape, grad_b1.shape, grad_W0.shape, grad_W1.shape)
-
         return {'W0': grad_W0, 'W1': grad_W1, 'b0': grad_b0, 'b1': grad_b1}
     
     def one_hot(y):
         onehot = np.zeros(n_out)
-        onehot[y-1] = 1
+        onehot[y] = 1
         return onehot
     
     def cross_entropy(a, y):
@@ -115,7 +114,7 @@ def task():
     n_in = 2
     n_hidden = 12
     n_out = 5
-    epochs = 200
+    epochs = 1000
     lr = 0.1
 
     network = NeuralNetwork(n_in, n_hidden, n_out)
@@ -167,6 +166,11 @@ def task():
         y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
 
+    
+    y_pred_test = np.array(y_pred_test)
+    accuracy = len(y_test[y_test == y_pred_test]) / len(y_test)
+    print(f'Accuracy: {accuracy}')
+
 
     #Plotting
     ax[0].set_title('Training loss')
@@ -180,28 +184,36 @@ def task():
 
      # ax[2] Scatter plot showing the labeled training data
     for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
-        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
+        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl, c=cl_colors[idx])
 
     ax[2].set_title('Training data')
     ax[2].legend() 
     ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
 
     # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
+    x1_values = np.linspace(2, 8, 100)
+    x2_values = np.linspace(2, 8, 100)
+    xx1, xx2 = np.meshgrid(x1_values, x2_values)
+    meshgrid_samples = np.c_[xx1.ravel(), xx2.ravel()]
 
-    random_samples = np.random.uniform(2, 7 + 1, size=(10000, 2))    
-    y_pred = []
+    predictions = []
 
-    for x in random_samples:
-        predicted = np.argmax(forward(x)[0])
-        y_pred.append(predicted)
+    for x in meshgrid_samples:
+        predictions.append(np.argmax(forward(x)[0]))
+    predictions = np.array(predictions)
+    predictions = predictions.reshape(xx1.shape)
 
-    ax[3].scatter(random_samples[:, 0], random_samples[:, 1], c=y_pred)
+
+
+
+    ax[3].imshow(predictions, cmap=cmap)
     ax[3].set_title('Learned decision boundary')
-    ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
+    ax[3].set_xlabel(r'$x_1$')
 
     # Write down everything
     # Just copy the above code and add the 
     network.export_model()
+
 
 
 
