@@ -170,6 +170,7 @@ def task():
 
     #Plotting
     ax[0].set_title('Training loss')
+    ax[0].set_yscale('log')
     ax[0].plot(history) 
 
     conf = ax[1].imshow(confustion_matrix), ax[1].set_title('Confusion matrix (test data)')
