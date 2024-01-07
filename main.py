@@ -77,9 +77,8 @@ def task():
     
     def backward(xs, a2, z2, a1, z1, target):
         d_a2_z2 = np.diag(a2) @ (np.diag(np.ones(len(a2))) - a2.T)
-        S = len(a2)
         y_oh = one_hot(target)
-        d_L_a2 = (-1/S) * np.linalg.inv(np.diag(a2)) @ y_oh
+        d_L_a2 = -np.linalg.inv(np.diag(a2)) @ y_oh # loss for a single sample
         d_z2_h2 = np.diag(np.ones(len(z2)))
         d_h2_a1 = network.theta['W1']
         d_a1_z1 = np.diag(np.exp(z1) / (np.exp(z1) + 1))
@@ -129,18 +128,39 @@ def task():
     network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=n_out)
 
     # Training
+    S = len(x_train)
     for _ in range(epochs):
         loss = 0
+        g_w0 = 0
+        g_w1 = 0
+        g_b0 = 0
+        g_b1 = 0
         for xs, target in zip(x_train, y_train):
             y_one_hot = one_hot(target)
             a2, z2, a1, z1 = forward(xs)
             loss += cross_entropy(a2, y_one_hot)
 
             gradients = backward(xs, a2, z2, a1, z1, target)
-            network.theta['W0'] -= lr*gradients['W0']
-            network.theta['W1'] -= lr*gradients['W1']
-            network.theta['b0'] -= lr*gradients['b0'].flatten()
-            network.theta['b1'] -= lr*gradients['b1'].flatten()
+            g_w0 += gradients['W0']
+            g_w1 += gradients['W1']
+            g_b0 += gradients['b0'].flatten()
+            g_b1 += gradients['b1'].flatten()
+
+        g_w0 /= S
+        g_w1 /= S
+        g_b0 /= S
+        g_b1 /= S
+
+        network.theta['W0'] -= lr * g_w0
+        network.theta['W1'] -= lr * g_w1
+        network.theta['b0'] -= lr * g_b0
+        network.theta['b1'] -= lr * g_b1
+           
+
+        # network.theta['W0'] -= (1/S) * lr *gradients['W0']
+        # network.theta['W1'] -= (1/S) * lr*gradients['W1']
+        # network.theta['b0'] -= (1/S) * lr*gradients['b0'].flatten()
+        # network.theta['b1'] -= (1/S) * lr*gradients['b1'].flatten()
         
         loss = loss/x_train.shape[0]
         print(loss)
@@ -186,9 +206,6 @@ def task():
     ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
 
     # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
-
-
-    
 
     ax[3].set_title('Learned decision boundary')
     ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
