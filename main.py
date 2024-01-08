@@ -55,31 +55,53 @@ def task():
     cmap = colors.ListedColormap(cl_colors)
 
     fig, ax = plt.subplots(1,4,figsize=(18,4))
-
-    # for x in meshgrid_samples:
     
+    ## ax[0] Plot showing the training loss and training accuracy
+    #ax[0].set_title('Training loss')
+    #
+    ## ax[1] Plot showing the confusion matrix on the test data (using matplotlib.pyplot.imshow)
+    #conf_mat = np.eye(len(np.unique(y_train)))
+    #conf = ax[1].imshow(conf_mat), ax[1].set_title('Confusion matrix (test data)')
+    #fig.colorbar(conf[0], ax=ax[1],shrink=0.5)
+    #ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
+    #ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
+#
+    ## ax[2] Scatter plot showing the labeled training data
+    #for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
+    #    ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
+    #ax[2].set_title('Training data')
+    #ax[2].legend() 
+    #ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
+#
+    ## ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
+    #N = 500
+    #ax[3].imshow(np.ones((N,N)), alpha=np.random.rand(N,N), origin='lower', extent=extent, cmap=cmap, interpolation="nearest")
+    #ax[3].set_title('Learned decision boundary')
+    #ax[3].set_xlabel(r'$x_1$'), ax[3].set_xlabel(r'$x_1$')
 
     """
     Start your code here
 
     """
-    def forward(x):
+    def forward(x, y_oh):
         z1 = network.theta['W0']@x + network.theta['b0']
         a1 = softplus(z1)
         z2 = network.theta['W1']@a1 + network.theta['b1']
         a2 = softmax(z2)
-        return a2, z2, a1, z1
+        l = cross_entropy(a2, y_oh)
+        return l, a2, z2, a1, z1
     
-    def softplus(z1): 
-        return np.log(1.0 + np.power(np.e, z1))
-    
-    def softmax(z2): 
-        return np.power(np.e, z2) / np.sum(np.power(np.e, z2))
+    def predict_class(x):
+        z1 = network.theta['W0']@x + network.theta['b0']
+        a1 = softplus(z1)
+        z2 = network.theta['W1']@a1 + network.theta['b1']
+        a2 = softmax(z2)
+        return np.argmax(a2)
     
     def backward(xs, a2, z2, a1, z1, target):
         d_a2_z2 = np.diag(a2) @ (np.diag(np.ones(len(a2))) - a2.T)
         y_oh = one_hot(target)
-        d_L_a2 = -np.linalg.inv(np.diag(a2)) @ y_oh # loss for a single sample
+        d_L_a2 = -np.linalg.inv(np.diag(a2)) @ y_oh 
         d_z2_h2 = np.diag(np.ones(len(z2)))
         d_h2_a1 = network.theta['W1']
         d_a1_z1 = np.diag(np.exp(z1) / (np.exp(z1) + 1))
@@ -108,9 +130,46 @@ def task():
         onehot[y] = 1
         return onehot
     
+    def softplus(z1): 
+        return np.log(1.0 + np.power(np.e, z1))
+    
+    def softmax(z2): 
+        return np.power(np.e, z2) / np.sum(np.power(np.e, z2))
+    
     def cross_entropy(a, y):
         return -np.sum(y*np.log(a))
+    
+    def flat_forward(theta_flat, x, y):
+        W0 = theta_flat[:network.n_hidden*network.n_in].reshape((n_hidden,n_in))
+        b0 = theta_flat[network.n_hidden*network.n_in:network.n_hidden*network.n_in + network.n_hidden]
+        W1 = theta_flat[network.n_hidden*network.n_in + network.n_hidden:network.n_hidden*network.n_in + network.n_hidden + network.n_hidden*network.n_out].reshape((network.n_out, network.n_hidden))
+        b1 = theta_flat[-network.n_out:]
 
+        a = softmax(W1 @ softplus(W0 @ x  + b0) + b1)
+        y_OH = one_hot(y)
+        return cross_entropy(a, y_OH)
+    
+    def flatten(p):
+        return np.concatenate((p['W0'].flatten(), p['b0'].flatten(), p['W1'].flatten(), p['b1'].flatten()))
+
+    def check_gradient_point(x, y):
+        l, a2, z2, a1, z1 = forward(x, one_hot(y))
+        gradients = backward(x, a2, z2, a1, z1, y)
+        analytic_grad = flatten(gradients)
+        theta_flat = flatten(network.theta)
+        numeric_grad = approx_fprime(theta_flat, flat_forward, 1e-3, x, y)
+
+        return np.allclose(numeric_grad,analytic_grad, rtol=0, atol=1e-2)
+
+    def check_gradient(x_train, y_train):
+        ok =True
+        for xs, ys in zip(x_train, y_train):
+            ok = ok and check_gradient_point(xs, ys)
+
+        print(f'Gradient check for all points: {ok}')
+
+
+    
     n_in = 2
     n_hidden = 12
     n_out = 5
@@ -126,6 +185,8 @@ def task():
     network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=n_hidden)
     network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=n_out)
 
+    check_gradient(x_train, y_train)
+    
     # Training
     S = len(x_train)
     for it in range(epochs):
@@ -137,8 +198,8 @@ def task():
         g_b1 = 0
         for xs, target in zip(x_train, y_train):
             y_one_hot = one_hot(target)
-            a2, z2, a1, z1 = forward(xs)
-            loss += cross_entropy(a2, y_one_hot)
+            l, a2, z2, a1, z1 = forward(xs, y_one_hot)
+            loss += l
 
             gradients = backward(xs, a2, z2, a1, z1, target)
             g_w0 += gradients['W0']
@@ -156,77 +217,66 @@ def task():
         network.theta['b0'] -= lr * g_b0
         network.theta['b1'] -= lr * g_b1
            
-        loss = loss/x_train.shape[0]
+        loss = loss/S
         history.append(loss)
 
-    # Testing
         
     y_pred_train = []
     for x, truth in zip(x_train, y_train):
-        predicted = np.argmax(forward(x)[0])
+        predicted = predict_class(x)
         y_pred_train.append(predicted)
     
+    
+    y_pred_train = np.array(y_pred_train)
+    train_accuracy = len(y_train[y_train == y_pred_train]) / len(y_train)
+    print(f'Train Accuracy: {train_accuracy}')
+    network.export_model()
 
+    # Testing
     y_pred_test = []
     for x, truth in zip(x_test, y_test):
-        predicted = np.argmax(forward(x)[0])
+        predicted = predict_class(x)
         y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
-
-    y_pred_train = np.array(y_pred_train)
     y_pred_test = np.array(y_pred_test)
-    train_accuracy = len(y_train[y_train == y_pred_train]) / len(y_train)
     test_accuracy = len(y_test[y_test == y_pred_test]) / len(y_test)
-    print(f'Train Accuracy: {train_accuracy}')
     print(f'Test Accuracy: {test_accuracy}')
 
 
     #Plotting
-    ax[0].set_title('Training loss')
-    ax[0].set_yscale('log')
-    ax[0].plot(history) 
+    ax[0].semilogy(np.asarray(history))
 
+    # Confusion matrix
     conf = ax[1].imshow(confustion_matrix), ax[1].set_title('Confusion matrix (test data)')
     fig.colorbar(conf[0], ax=ax[1],shrink=0.5)
     ax[1].set_xticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_xlabel('predicted label')
     ax[1].set_yticks(list(np.arange(len(np.unique(y_train))))), ax[1].set_ylabel('actual label')
 
-    #  ax[2] Scatter plot showing the labeled training data
+    # Scatter plots
     for idx, cl in enumerate(['class 1', 'class 2', 'class 3', 'class 4', 'class 5']):
-        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl, c=cl_colors[idx])
-    # for idx, x in enumerate(x_train):
-    #     ax[2].scatter(x_train[idx,0], x_train[idx, 1], c=cl_colors[y_train[idx]])
-
+        ax[2].scatter(x_train[:,0][y_train==idx],x_train[:,1][y_train==idx],label=cl,c=cl_colors[idx])
     ax[2].set_title('Training data')
     ax[2].legend() 
     ax[2].set_xlabel(r'$x_1$'), ax[2].set_ylabel(r'$x_2$')
 
-    # ax[3] Plot showing the learned decision boundary weighted by the logits output (using matplotlib.pyplot.imshow)
-    x1_values = np.linspace(extent[0], extent[1], 100)
-    x2_values = np.linspace(extent[2], extent[3], 100)
+    # Descion boundiries
+    N = 500
+    x1_values = np.linspace(extent[0], extent[1], N)
+    x2_values = np.linspace(extent[2], extent[3], N)
     xx1, xx2 = np.meshgrid(x1_values, x2_values)
     meshgrid_samples = np.c_[xx1.ravel(), xx2.ravel()]
-    
-
     predictions = []
-
+    confidence = []
     for x in meshgrid_samples:
-        predictions.append(np.argmax(forward(x)[0]))
-    predictions = np.array(predictions)
-    predictions = predictions.reshape(xx1.shape)
-    predictions = np.flip(predictions, axis = 0) # because otherwise the 0 is on top 
+        p = forward(x, one_hot(0))[1]
+        predictions.append(np.argmax(p))
+        confidence.append(np.max(p))
 
-
-
-    ax[3].imshow(predictions, cmap=cmap)
+    predictions, confidence = np.array(predictions), np.array(confidence)
+    predictions, confidence = predictions.reshape(xx1.shape), confidence.reshape(xx1.shape)
+    ax[3].imshow(predictions, alpha=confidence, origin='lower', extent=extent, cmap=cmap, interpolation="nearest")
     ax[3].set_title('Learned decision boundary')
     ax[3].set_xlabel(r'$x_1$')
-
-    # Write down everything
-    # Just copy the above code and add the 
-    network.export_model()
-
-
 
 
     return fig
