@@ -180,10 +180,10 @@ def task():
     confustion_matrix = np.zeros((n_out, n_out))
     history = []
 
-    network.theta['W0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=(n_hidden, n_in))
-    network.theta['W1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=(n_out, n_hidden))
-    network.theta['b0'] = np.random.uniform(low=-1.0/n_in, high=1.0/n_in, size=n_hidden)
-    network.theta['b1'] = np.random.uniform(low=-1.0/n_hidden, high=1.0/n_hidden, size=n_out)
+    network.theta['W0'] = np.random.uniform(low=-1.0/np.sqrt(n_in), high=1.0/np.sqrt(n_in), size=(n_hidden, n_in))
+    network.theta['W1'] = np.random.uniform(low=-1.0/np.sqrt(n_hidden), high=1.0/np.sqrt(n_hidden), size=(n_out, n_hidden))
+    network.theta['b0'] = np.random.uniform(low=-1.0/np.sqrt(n_in), high=1.0/np.sqrt(n_in), size=n_hidden)
+    network.theta['b1'] = np.random.uniform(low=-1.0/np.sqrt(n_hidden), high=1.0/np.sqrt(n_hidden), size=n_out)
 
     check_gradient(x_train, y_train)
     
