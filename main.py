@@ -234,13 +234,18 @@ def task():
 
     # Testing
     y_pred_test = []
+    test_loss = 0
     for x, truth in zip(x_test, y_test):
-        predicted = predict_class(x)
+        l, a, _, _, _ = forward(x, one_hot(truth))
+        predicted = np.argmax(a)
+        test_loss += l
         y_pred_test.append(predicted)
         confustion_matrix[truth][predicted] += 1
     y_pred_test = np.array(y_pred_test)
     test_accuracy = len(y_test[y_test == y_pred_test]) / len(y_test)
+    test_loss = test_loss/(x_test.shape[0])
     print(f'Test Accuracy: {test_accuracy}')
+    print(f'Test loss: {test_loss}')
 
 
     #Plotting
