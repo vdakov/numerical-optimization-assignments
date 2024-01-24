@@ -6,11 +6,18 @@ def decompose_image_to_blocks(img, window_size):
     """ Rearrange img of (N,N) into non-overlapping blocks of (N_blocks,window_size**2).
         Make sure to determine N_blocks from the image size. 
     """
-    pass
+    N = img.shape[0]
+    N_blocks = N // window_size
+    blocks = img.reshape(N_blocks, window_size, N_blocks, window_size).transpose(0, 2, 1, 3)
+    blocks = blocks.reshape(N_blocks, N_blocks, -1).flatten()
+    return blocks
 
 def rearrange_image_from_blocks(blocks, img_size):
     """ Function to rearrange non-overlapping blocks of (N_blocks,window_size**2) into img (N,N). """
-    pass
+    N_blocks = blocks.shape[0]
+    window_size = int(np.sqrt(blocks.shape[2]))
+    return blocks.reshape(N_blocks, N_blocks, window_size, window_size).transpose(0, 2, 1, 3).reshape(img_size, img_size)
+
 
 def DCT2_2D(d, nB):
     """ Function to get 2D DCT basis functions of size (d, d, nB, nB).
@@ -24,7 +31,14 @@ def DCT2_1D(d, n):
     """ Function to get 1D DCT basis functions of size (d, n)
         n: signal dimension, d: basis functions 
     """
-    pass
+    dct_matrix = np.zeros((d, n))
+
+    for k in range(d):
+        for i in range(n):
+            dct_matrix[k, i] = np.sqrt(2 / n) * np.cos((np.pi * k * (2 * i + 1)) / (2 * n))
+
+    return dct_matrix
+
 
 def task1(signal):
     """ Signal Denoising
@@ -47,11 +61,31 @@ def task1(signal):
 
     
     var = (0.01**2, 0.03**2, 0.01**2, 0.01**2)
-    K = (15, 15, 100, 5)
+    d = (15, 15, 100, 5)
 
     """ Start of your code
     """
-    
+    K = (15,15,100,5) # 
+
+    def frank_wolfe( x0, K, solution):
+
+        xk = x0
+        for k in range(K):
+            pk = solution(xk)
+            tk = 2.0/(k+1)
+            xk = (1.0-tk)*xk + tk*pk
+        
+        return xk 
+
+    for idx, delta2 in enumerate(var):
+        noised_signal = signal + delta2*np.random.normal(size=signal.shape)
+        
+        A = DCT2_1D(d[idx], signal.shape[0])
+        
+        denoised = frank_wolfe(noised_signal, K[idx], )
+        ax[idx//2, idx%2].plot(denoised)       
+
+        
 
 
 
