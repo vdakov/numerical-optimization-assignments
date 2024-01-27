@@ -6,16 +6,29 @@ def decompose_image_to_blocks(img, window_size):
     """ Rearrange img of (N,N) into non-overlapping blocks of (N_blocks,window_size**2).
         Make sure to determine N_blocks from the image size. 
     """
-    N = img.shape[0]
-    N_blocks = N // window_size
-    blocks = img.reshape(N_blocks, window_size, N_blocks, window_size).transpose(0, 2, 1, 3)
-    blocks = blocks.reshape(N_blocks, N_blocks, -1).flatten()
+    # N = img.shape[0]
+    # N_blocks = N // window_size
+    # blocks = img.reshape(N_blocks, window_size, N_blocks, window_size).transpose(0, 2, 1, 3)
+    # blocks = blocks.reshape(N_blocks, N_blocks, -1).flatten()
+    h, w = img.shape
+    n_b = window_size
+    num_blocks = (h * w) / np.square(n_b)
+    blocks = []
+    
+    for i in range(h // n_b):
+        for j in range(w // n_b):
+            block = img[i*n_b:(i+1)*n_b, j*n_b:(j+1)*n_b]
+            block = block.flatten()
+            blocks.append(block)
+
+    blocks = np.array(blocks)
+
     return blocks
 
 def rearrange_image_from_blocks(blocks, img_size):
     """ Function to rearrange non-overlapping blocks of (N_blocks,window_size**2) into img (N,N). """
-    N_blocks = blocks.shape[0]
-    window_size = int(np.sqrt(blocks.shape[2]))
+    N_blocks = int(np.sqrt(blocks.shape[0]))  # Assuming it's a square image
+    window_size = int(np.sqrt(blocks.shape[1]))
     return blocks.reshape(N_blocks, N_blocks, window_size, window_size).transpose(0, 2, 1, 3).reshape(img_size, img_size)
 
 
@@ -25,7 +38,25 @@ def DCT2_2D(d, nB):
         nB is the size of the non-overlapping blocks per dimension
         Reshape to (d**2, nB**2) to conveniently work with this. 
     """
-    pass
+    dct_matrix = np.zeros((d, d, nB, nB))
+
+    
+    for l in range(d):
+        alpha_l =  np.sqrt(2 / nB) if l != 0 else np.sqrt(1 / nB)
+        for m in range(d):
+            alpha_m =  np.sqrt(2 / nB) if m != 0 else np.sqrt(1 / nB)
+            for i in range(nB):
+                for j in range(nB):
+                    a = alpha_l * alpha_m
+                    dct_matrix[l, m, i, j] = a * np.cos((np.pi / nB) * l * (i + 0.5)) * np.cos((np.pi / nB) * m * (j + 0.5))
+                    
+
+def compute_gradient_task_1(A, x, b):
+    return A @ (A.T @ x - b)
+
+def compute_gradient_task_2(A, x, b):
+    return A @ (A.T @ x - b)
+
 
 def DCT2_1D(d, n):
     """ Function to get 1D DCT basis functions of size (d, n)
@@ -33,9 +64,16 @@ def DCT2_1D(d, n):
     """
     dct_matrix = np.zeros((d, n))
 
-    for k in range(d):
+
+    for j in range(d):
         for i in range(n):
-            dct_matrix[k, i] = np.sqrt(2 / n) * np.cos((np.pi * k * (2 * i + 1)) / (2 * n))
+            if j != 0:
+                alpha = np.sqrt(2 / n) 
+                dct_matrix[j, i] = alpha * np.cos((np.pi / n) * j * (i + 0.5))
+            else:
+                alpha = 1.0 / np.sqrt(n)
+                dct_matrix[j, i] = alpha * np.cos((np.pi / n) * j * (i + 0.5))
+            
 
     return dct_matrix
 
@@ -51,13 +89,17 @@ def task1(signal):
 
     """
 
-    fig, ax = plt.subplots(2,2, figsize=(16,8))
+    fig, ax = plt.subplots(4,2, figsize=(16,8))
     fig.suptitle('Task 1 - Signal denoising task', fontsize=16)
 
-    ax[0,0].set_title('a)')
-    ax[0,1].set_title('b)')
-    ax[1,0].set_title('c)')
-    ax[1,1].set_title('d)')
+    # fig, ax = plt.subplots(3,2, figsize=(16,8))
+    # fig.suptitle('Task 1 - Signal denoising task', fontsize=16)
+
+    # ax[0,0].set_title('a)')
+    # ax[0,1].set_title('b)')
+    # ax[1,0].set_title('c)')
+    # ax[1,1].set_title('d)')
+
 
     
     var = (0.01**2, 0.03**2, 0.01**2, 0.01**2)
@@ -66,24 +108,33 @@ def task1(signal):
     """ Start of your code
     """
     K = (15,15,100,5) # 
+    
 
-    def frank_wolfe( x0, K, solution):
+    def frank_wolfe(x0, K, b, A):
 
         xk = x0
         for k in range(K):
-            pk = solution(xk)
+            pk = np.zeros(x0.shape[0])
+            pk_index = np.argmin(compute_gradient_task_1(A, xk, b), keepdims=True)[0]
+            pk[pk_index] = 1
             tk = 2.0/(k+1)
             xk = (1.0-tk)*xk + tk*pk
         
-        return xk 
+        return A.T @ xk 
+    
+    n = signal.shape[0] 
 
-    for idx, delta2 in enumerate(var):
-        noised_signal = signal + delta2*np.random.normal(size=signal.shape)
-        
-        A = DCT2_1D(d[idx], signal.shape[0])
-        
-        denoised = frank_wolfe(noised_signal, K[idx], )
-        ax[idx//2, idx%2].plot(denoised)       
+    for idx, sigma2 in enumerate(var):
+        noised_signal = signal + np.random.normal(0, np.sqrt(sigma2), size=n)
+   
+        A = DCT2_1D(d[idx], n)
+        x0 = np.zeros(d[idx])
+        x0[0] = 1 #can be anything, as long it is withing convex set
+
+
+        denoised = frank_wolfe(x0, K[idx], noised_signal, A)
+        ax[idx, 0].plot(noised_signal)   
+        ax[idx, 1].plot(denoised)       
 
         
 
@@ -135,6 +186,35 @@ def task2(img):
 
     """ Start of your code
     """
+
+    n_b = 8
+    blocks = decompose_image_to_blocks(img, n_b)
+    print(blocks.shape)
+    d = 8
+    t = 0.01
+    
+
+    def frank_wolfe(x0, K, b, A):
+
+        xk = x0
+        for k in range(K):
+            
+            gradient = compute_gradient_task_2(A, xk, b)
+            grad_index = np.argmax(np.abs(gradient), keepdims=True)[0]
+            sign = gradient[grad_index] / (gradient[grad_index] + 1e-10)
+            e_i = np.zeros(x0.shape[0])
+            e_i[grad_index] = 1
+            pk = -t * sign * e_i
+            tk = 2.0 / (k + 1)
+            xk = (1.0 - tk) * xk + tk * pk
+
+        return A.T @ xk 
+    
+    rearranged = rearrange_image_from_blocks(blocks, 256)
+    print(rearranged.shape)
+    ax1[1].imshow(rearranged,'gray')
+            
+
    
 
 
