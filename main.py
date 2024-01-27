@@ -49,13 +49,16 @@ def DCT2_2D(d, nB):
                 for j in range(nB):
                     a = alpha_l * alpha_m
                     dct_matrix[l, m, i, j] = a * np.cos((np.pi / nB) * l * (i + 0.5)) * np.cos((np.pi / nB) * m * (j + 0.5))
+
+    return dct_matrix.reshape(d**2, nB**2)
                     
 
 def compute_gradient_task_1(A, x, b):
     return A @ (A.T @ x - b)
 
 def compute_gradient_task_2(A, x, b):
-    return A @ (A.T @ x - b)
+    
+    return A.T @ (A @ x - b)
 
 
 def DCT2_1D(d, n):
@@ -189,36 +192,64 @@ def task2(img):
 
     n_b = 8
     blocks = decompose_image_to_blocks(img, n_b)
-    print(blocks.shape)
-    d = 8
-    t = 0.01
-    
 
-    def frank_wolfe(x0, K, b, A):
+
+    def frank_wolfe_img_compression(x0, K, b, A, t):
 
         xk = x0
         for k in range(K):
-            
             gradient = compute_gradient_task_2(A, xk, b)
             grad_index = np.argmax(np.abs(gradient), keepdims=True)[0]
-            sign = gradient[grad_index] / (gradient[grad_index] + 1e-10)
+            sign = gradient[grad_index] / np.abs((gradient[grad_index]))
             e_i = np.zeros(x0.shape[0])
-            e_i[grad_index] = 1
+            e_i[grad_index] = 1 # so it is in the convex set
             pk = -t * sign * e_i
             tk = 2.0 / (k + 1)
             xk = (1.0 - tk) * xk + tk * pk
-
-        return A.T @ xk 
+        
+        
+        return A @ xk
     
-    rearranged = rearrange_image_from_blocks(blocks, 256)
-    print(rearranged.shape)
+
+    d = 8
+    t = 0.01
+    A = DCT2_2D(d, n_b)
+    K = 100
+    compressed = []
+    x0 = np.zeros(n_b ** 2)
+    x0[0] = t
+
+    
+    for b_s in blocks:
+        x_s = frank_wolfe_img_compression(x0, K, b_s, A, t)
+        compressed.append(x_s)
+        pass
+    
+    compressed = np.array(compressed)
+    rearranged = rearrange_image_from_blocks(compressed, 256)
+    
     ax1[1].imshow(rearranged,'gray')
+
+
+    ##LASSO
+
+
+    for l_idx, l in enumerate(lamb_arr):
+        lasso_compressed = []
+
+        for b_s in blocks:
+            A_t_b_s = A.T @ b_s 
+            x_s =  np.abs(np.abs(A_t_b_s) - l)* np.sign(A_t_b_s)
+            lasso_compressed.append(A @ x_s)
+
+        lasso_compressed = np.array(lasso_compressed)
+        lasso_rearranged = rearrange_image_from_blocks(lasso_compressed, 256)
+
+        ax2[l_idx+1].imshow(lasso_rearranged, 'gray')
             
 
    
 
-
-    
     """ End of your code
     """
     return fig1, fig2
