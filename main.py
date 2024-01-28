@@ -57,8 +57,7 @@ def compute_gradient_task_1(A, x, b):
     return A @ (A.T @ x - b)
 
 def compute_gradient_task_2(A, x, b):
-    
-    return A.T @ (A @ x - b)
+    return A @ (A.T @ x - b)
 
 
 def DCT2_1D(d, n):
@@ -200,13 +199,12 @@ def task2(img):
         for k in range(K):
             gradient = compute_gradient_task_2(A, xk, b)
             grad_index = np.argmax(np.abs(gradient), keepdims=True)[0]
-            sign = gradient[grad_index] / np.abs((gradient[grad_index]))
+            sign = np.sign(gradient[grad_index])
             e_i = np.zeros(x0.shape[0])
             e_i[grad_index] = 1 # so it is in the convex set
             pk = -t * sign * e_i
             tk = 2.0 / (k + 1)
             xk = (1.0 - tk) * xk + tk * pk
-        
         
         return A @ xk
     
@@ -214,7 +212,7 @@ def task2(img):
     d = 8
     t = 0.01
     A = DCT2_2D(d, n_b)
-    K = 100
+    K = 1000
     compressed = []
     x0 = np.zeros(n_b ** 2)
     x0[0] = t
@@ -223,7 +221,6 @@ def task2(img):
     for b_s in blocks:
         x_s = frank_wolfe_img_compression(x0, K, b_s, A, t)
         compressed.append(x_s)
-        pass
     
     compressed = np.array(compressed)
     rearranged = rearrange_image_from_blocks(compressed, 256)
