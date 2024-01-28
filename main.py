@@ -6,10 +6,6 @@ def decompose_image_to_blocks(img, window_size):
     """ Rearrange img of (N,N) into non-overlapping blocks of (N_blocks,window_size**2).
         Make sure to determine N_blocks from the image size. 
     """
-    # N = img.shape[0]
-    # N_blocks = N // window_size
-    # blocks = img.reshape(N_blocks, window_size, N_blocks, window_size).transpose(0, 2, 1, 3)
-    # blocks = blocks.reshape(N_blocks, N_blocks, -1).flatten()
     h, w = img.shape
     n_b = window_size
     num_blocks = (h * w) / np.square(n_b)
@@ -27,7 +23,7 @@ def decompose_image_to_blocks(img, window_size):
 
 def rearrange_image_from_blocks(blocks, img_size):
     """ Function to rearrange non-overlapping blocks of (N_blocks,window_size**2) into img (N,N). """
-    N_blocks = int(np.sqrt(blocks.shape[0]))  # Assuming it's a square image
+    N_blocks = int(np.sqrt(blocks.shape[0]))  
     window_size = int(np.sqrt(blocks.shape[1]))
     return blocks.reshape(N_blocks, N_blocks, window_size, window_size).transpose(0, 2, 1, 3).reshape(img_size, img_size)
 
@@ -50,11 +46,11 @@ def DCT2_2D(d, nB):
                     a = alpha_l * alpha_m
                     dct_matrix[l, m, i, j] = a * np.cos((np.pi / nB) * l * (i + 0.5)) * np.cos((np.pi / nB) * m * (j + 0.5))
 
-    return dct_matrix.reshape(d**2, nB**2)
+    return dct_matrix.reshape(d**2, nB**2) 
                     
 
 def compute_gradient_task_1(A, x, b):
-    return A @ (A.T @ x - b)
+    return  A @ (A.T @ x - b)
 
 def compute_gradient_task_2(A, x, b):
     return A @ (A.T @ x - b)
@@ -91,17 +87,14 @@ def task1(signal):
 
     """
 
-    fig, ax = plt.subplots(4,2, figsize=(16,8))
+
+    fig, ax = plt.subplots(2,2, figsize=(16,8))
     fig.suptitle('Task 1 - Signal denoising task', fontsize=16)
 
-    # fig, ax = plt.subplots(3,2, figsize=(16,8))
-    # fig.suptitle('Task 1 - Signal denoising task', fontsize=16)
-
-    # ax[0,0].set_title('a)')
-    # ax[0,1].set_title('b)')
-    # ax[1,0].set_title('c)')
-    # ax[1,1].set_title('d)')
-
+    ax[0,0].set_title('a)')
+    ax[0,1].set_title('b)')
+    ax[1,0].set_title('c)')
+    ax[1,1].set_title('d)')
 
     
     var = (0.01**2, 0.03**2, 0.01**2, 0.01**2)
@@ -109,7 +102,7 @@ def task1(signal):
 
     """ Start of your code
     """
-    K = (15,15,100,5) # 
+    K = (50,100,200,100) 
     
 
     def frank_wolfe(x0, K, b, A):
@@ -124,8 +117,8 @@ def task1(signal):
         
         return A.T @ xk 
     
-    n = signal.shape[0] 
 
+    n = signal.shape[0] 
     for idx, sigma2 in enumerate(var):
         noised_signal = signal + np.random.normal(0, np.sqrt(sigma2), size=n)
    
@@ -135,8 +128,9 @@ def task1(signal):
 
 
         denoised = frank_wolfe(x0, K[idx], noised_signal, A)
-        ax[idx, 0].plot(noised_signal)   
-        ax[idx, 1].plot(denoised)       
+        ax[idx//2, idx%2].plot(signal, color='black')
+        ax[idx//2, idx%2].plot(noised_signal, color='red')   
+        ax[idx//2, idx%2].plot(denoised, color='green')       
 
         
 
@@ -201,12 +195,12 @@ def task2(img):
             grad_index = np.argmax(np.abs(gradient), keepdims=True)[0]
             sign = np.sign(gradient[grad_index])
             e_i = np.zeros(x0.shape[0])
-            e_i[grad_index] = 1 # so it is in the convex set
+            e_i[grad_index] = 1 
             pk = -t * sign * e_i
             tk = 2.0 / (k + 1)
             xk = (1.0 - tk) * xk + tk * pk
-        
-        return A @ xk
+
+        return A.T @ xk # should be like this since A.T here is our A in the formulation?
     
 
     d = 8
@@ -214,10 +208,9 @@ def task2(img):
     A = DCT2_2D(d, n_b)
     K = 1000
     compressed = []
-    x0 = np.zeros(n_b ** 2)
-    x0[0] = t
+    x0 = np.zeros(n_b ** 2) # shouldnt be d^2?
 
-    
+
     for b_s in blocks:
         x_s = frank_wolfe_img_compression(x0, K, b_s, A, t)
         compressed.append(x_s)
@@ -236,8 +229,8 @@ def task2(img):
 
         for b_s in blocks:
             A_t_b_s = A.T @ b_s 
-            x_s =  np.abs(np.abs(A_t_b_s) - l)* np.sign(A_t_b_s)
-            lasso_compressed.append(A @ x_s)
+            x_s =  np.abs(np.abs(A_t_b_s) - l)* np.sign(A_t_b_s) # is not quite the same formula? 
+            lasso_compressed.append(A.T @ x_s) # same thing as before?
 
         lasso_compressed = np.array(lasso_compressed)
         lasso_rearranged = rearrange_image_from_blocks(lasso_compressed, 256)
