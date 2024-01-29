@@ -122,7 +122,6 @@ def task1(signal):
             pk[pk_index] = 1
     
             if(np.isclose(conditional_gradinent_norm(xk, pk, grad), 1e-3, atol=1e-3)):
-                print(k)
                 break
             tk = 2.0/(k+1)
             xk = (1.0-tk)*xk + tk*pk
@@ -155,7 +154,7 @@ def task1(signal):
     return fig
 
 def compute_gradient_task_2(A, x, b):
-    return  A.T @ (A @ x - b) # as b in R^n^2 
+    return  A @ (A.T @ x - b) # as b in R^n^2 
 
 def task2(img):
     """ Image Compression
@@ -210,7 +209,6 @@ def task2(img):
 
         for k in range(1, K):
             gradient = compute_gradient_task_2(A, xk, b)
-            gradient[0] = 0
             grad_index = np.argmax(np.abs(gradient))
 
             sign = np.sign(gradient[grad_index])
@@ -221,18 +219,16 @@ def task2(img):
 
             xk = (1.0 - tk) * xk + tk * pk
 
+            xk[0] = b[0]
 
-        xk[0] = b[0]  
-        
-   
-        return A.T @ xk # should be like this since A.T here is our A in the formulation?
+        return A.T @ xk 
     
     n_b = 8
     blocks = decompose_image_to_blocks(img, n_b)
     d = 8
     t = 0.01
     A = DCT2_2D(d, n_b)
-    K = 100
+    K = 500
     compressed = []
 
 
@@ -254,8 +250,8 @@ def task2(img):
         lasso_compressed = []
 
         for b_s in blocks:
-            A_t_b_s = A.T @ b_s 
-            x_s =  np.abs(np.abs(A_t_b_s) - l)* np.sign(A_t_b_s) # is not quite the same formula? 
+            A_t_b_s = A @ b_s 
+            x_s =  np.maximum(0, np.abs(A_t_b_s) - l)* np.sign(A_t_b_s) # is not quite the same formula? 
             lasso_compressed.append(A.T @ x_s) # same thing as before?
 
         lasso_compressed = np.array(lasso_compressed)
