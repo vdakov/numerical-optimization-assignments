@@ -36,24 +36,28 @@ def DCT2_2D(d, nB):
     """
     dct_matrix = np.zeros((d, d, nB, nB))
 
+    n = nB
+
     
     for l in range(d):
-        alpha_l =  np.sqrt(2 / nB) if l != 0 else np.sqrt(1 / nB)
+        alpha_l =  np.sqrt(1 / n) if l == 0 else np.sqrt(2 / n)
         for m in range(d):
-            alpha_m =  np.sqrt(2 / nB) if m != 0 else np.sqrt(1 / nB)
+            alpha_m =  np.sqrt(1 / n) if m == 0 else np.sqrt(2 / n)
             for i in range(nB):
                 for j in range(nB):
                     a = alpha_l * alpha_m
-                    dct_matrix[l, m, i, j] = a * np.cos((np.pi / nB) * l * (i + 0.5)) * np.cos((np.pi / nB) * m * (j + 0.5))
+                    dct_matrix[l, m, i, j] = a * np.cos((np.pi / n) * l * (i + 0.5)) * np.cos((np.pi / n) * m * (j + 0.5))
 
     return dct_matrix.reshape(d**2, nB**2) 
                     
 
 def compute_gradient_task_1(A, x, b):
-    return  A @ (A.T @ x - b)
-
-def compute_gradient_task_2(A, x, b):
     return A @ (A.T @ x - b)
+
+
+def conditional_gradinent_norm(x, p_k, grad):
+    return (x - p_k).T @ grad
+
 
 
 def DCT2_1D(d, n):
@@ -102,35 +106,45 @@ def task1(signal):
 
     """ Start of your code
     """
-    K = (50,100,200,100) 
+
+    K = 250
     
 
     def frank_wolfe(x0, K, b, A):
 
         xk = x0
-        for k in range(K):
+        
+        
+        for k in range(1, K):
             pk = np.zeros(x0.shape[0])
-            pk_index = np.argmin(compute_gradient_task_1(A, xk, b), keepdims=True)[0]
+            grad = compute_gradient_task_1(A, xk, b)
+            pk_index = np.argmin(grad, keepdims=True)[0]
             pk[pk_index] = 1
+    
+            if(np.isclose(conditional_gradinent_norm(xk, pk, grad), 1e-3, atol=1e-3)):
+                print(k)
+                break
             tk = 2.0/(k+1)
             xk = (1.0-tk)*xk + tk*pk
-        
+            
+
         return A.T @ xk 
     
 
     n = signal.shape[0] 
     for idx, sigma2 in enumerate(var):
         noised_signal = signal + np.random.normal(0, np.sqrt(sigma2), size=n)
-   
+
         A = DCT2_1D(d[idx], n)
         x0 = np.zeros(d[idx])
         x0[0] = 1 #can be anything, as long it is withing convex set
 
 
-        denoised = frank_wolfe(x0, K[idx], noised_signal, A)
-        ax[idx//2, idx%2].plot(signal, color='black')
-        ax[idx//2, idx%2].plot(noised_signal, color='red')   
-        ax[idx//2, idx%2].plot(denoised, color='green')       
+        denoised = frank_wolfe(x0, K, noised_signal, A)
+        ax[idx//2, idx%2].plot(signal, color='black', label='Original Signal')
+        ax[idx//2, idx%2].plot(noised_signal, color='red', label='Noised Signal')   
+        ax[idx//2, idx%2].plot(denoised, color='green', label='Denoised Signal')
+        ax[idx//2, idx%2].legend()
 
         
 
@@ -139,6 +153,9 @@ def task1(signal):
     """ End of your code
     """
     return fig
+
+def compute_gradient_task_2(A, x, b):
+    return  A.T @ (A @ x - b) # as b in R^n^2 
 
 def task2(img):
     """ Image Compression
@@ -183,36 +200,45 @@ def task2(img):
     """ Start of your code
     """
 
-    n_b = 8
-    blocks = decompose_image_to_blocks(img, n_b)
 
 
-    def frank_wolfe_img_compression(x0, K, b, A, t):
 
-        xk = x0
-        for k in range(K):
+    def frank_wolfe_img_compression(K, b, A, t):
+
+        x0 = np.random.rand(b.shape[0])
+        xk = (x0 / np.sum(x0)) * 0.01
+
+        for k in range(1, K):
             gradient = compute_gradient_task_2(A, xk, b)
-            grad_index = np.argmax(np.abs(gradient), keepdims=True)[0]
+            gradient[0] = 0
+            grad_index = np.argmax(np.abs(gradient))
+
             sign = np.sign(gradient[grad_index])
-            e_i = np.zeros(x0.shape[0])
+            e_i = np.zeros(x0.shape)
             e_i[grad_index] = 1 
             pk = -t * sign * e_i
-            tk = 2.0 / (k + 1)
+            tk = 2.0 / (k + 2)
+
             xk = (1.0 - tk) * xk + tk * pk
 
+
+        xk[0] = b[0]  
+        
+   
         return A.T @ xk # should be like this since A.T here is our A in the formulation?
     
-
+    n_b = 8
+    blocks = decompose_image_to_blocks(img, n_b)
     d = 8
     t = 0.01
     A = DCT2_2D(d, n_b)
-    K = 1000
+    K = 100
     compressed = []
-    x0 = np.zeros(n_b ** 2) # shouldnt be d^2?
+
 
 
     for b_s in blocks:
-        x_s = frank_wolfe_img_compression(x0, K, b_s, A, t)
+        x_s = frank_wolfe_img_compression(K, b_s, A, t)
         compressed.append(x_s)
     
     compressed = np.array(compressed)
